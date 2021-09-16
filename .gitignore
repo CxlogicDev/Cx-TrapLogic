@@ -1,0 +1,63 @@
+# Folders
+artifacts/
+bin/
+obj/
+.dotnet/
+.nuget/
+.packages/
+.tools/
+.vs/
+.vscode/
+node_modules/
+.gradle/
+src/SignalR/clients/**/dist/
+modules/
+
+# User-specific files
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUNIT
+*.VisualState.xml
+TestResult.xml
+
+# File extensions
+*.aps
+*.binlog
+*.dll
+*.DS_Store
+*.exe
+*.idb
+*.lib
+*.log
+*.pch
+*.pdb
+*.pidb
+*.psess
+*.res
+*.snk
+*.so
+*.suo
+*.tlog
+*.user
+*.userprefs
+*.userosscache
+*.sln.docstates
+*.vspx
+*.sqlite.db
+*.mdf
+*.ldf
