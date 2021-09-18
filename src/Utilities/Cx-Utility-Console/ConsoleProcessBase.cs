@@ -6,13 +6,13 @@ namespace CxUtility.Cx_Console;
 
 public abstract class ConsoleBaseProcess : IConsoleProcessService
 {
-    public CxCommandService _CxProcess { get; }
+    public CxCommandService _CxCommandService { get; }
 
     public IConfiguration _Config { get; }
 
     public ConsoleBaseProcess(CxCommandService CxProcess, IConfiguration config)
     {
-        _CxProcess = CxProcess;
+        _CxCommandService = CxProcess;
         _Config = config;
     }
 
@@ -81,18 +81,18 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     /// <param name="options">The alllowed Options</param>
     protected abstract void config_TitleLineOptions(TitleLineOptions options);
 
+    /// <summary>
+    /// The Action that is ran for the Process
+    /// </summary>
+    /// <param name="cancellationToken">The Token to Cancle the program</param>
+    public abstract Task ProcessAction(CancellationToken cancellationToken);
+
     internal Task runProcess(CancellationToken cancellationToken)
     {
         cancellationToken.Register(HandleCancellation);
 
         return ProcessAction(cancellationToken);
     }
-
-    /// <summary>
-    /// The Action that is ran for the Process
-    /// </summary>
-    /// <param name="cancellationToken">The Token to Cancle the program</param>
-    public abstract Task ProcessAction(CancellationToken cancellationToken);
 
     /// <summary>
     /// Tell The main process if a Cancelation has accured

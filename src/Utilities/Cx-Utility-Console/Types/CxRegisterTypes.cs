@@ -11,7 +11,7 @@ namespace CxUtility.Cx_Console;
         /// <summary>
         /// Do not show or process in the console 
         /// </summary>
-        None,
+        Skip,
         /// <summary>
         /// New or Updating Process that marked in the display Visible only in Code
         /// </summary>

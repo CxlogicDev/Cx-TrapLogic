@@ -7,6 +7,8 @@ public sealed record CxCommandService
     
     public string Command { get; }
 
+    public bool isValid() => Command.hasCharacters() && Process.hasCharacters();
+
     ///// <summary>
     ///// Will Pull out a Enum Rep of the Process Command is Described
     ///// </summary>

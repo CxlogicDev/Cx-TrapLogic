@@ -4,10 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 namespace CxUtility.Cx_Console;
 
+
+
 public static class CxConsoleHost
 {
-    static IHostBuilder? iHost;
-    static string[] _args { get; set; }
+#pragma warning disable CS8618 // Value will never be null when it is used  
+    internal static CxConsoleHostBuilder _hostBuilder;
+#pragma warning restore CS8618 
 
     /// <summary>
     /// Build the Cx Console Parts 
@@ -15,40 +18,61 @@ public static class CxConsoleHost
     /// <param name="registerAssemblies"></param>
     /// <param name="args"></param>
     /// <returns></returns>
-    public static IHostBuilder CxConsole_BuildHost(string[] args)
+    public static ICxConsoleHostBuilder CxConsole_BuildHost(string[] args)
     {
-        iHost = Host.CreateDefaultBuilder(args);
-        _args = args;
-        return iHost;
+        _hostBuilder = new CxConsoleHostBuilder(args);       
+        return _hostBuilder;
     }
 
-    public static IHostBuilder CxConsole_RegisterServices(this IHostBuilder builder, Action<IServiceCollection> AddtionalServices) =>
-         iHost.ConfigureServices(AddtionalServices);
-
-    static List<Assembly> RegisterList { get; } = new();
-
-    public static IHostBuilder CxConsole_RegisterProcessAssemblies(this IHostBuilder builder, params Assembly[] RegisterAssemblies)
+    /// <summary>
+    /// Attach services and process that are needed by the process implenattaions.
+    /// </summary>
+    /// <param name="builder">The Created Builder that was supplied.</param>
+    /// <param name="AddtionalServices">The services that need to be included</param>
+    public static ICxConsoleHostBuilder CxConsole_RegisterServices(this ICxConsoleHostBuilder builder, Action<IServiceCollection> AddtionalServices)
     {
-        foreach (var RegisterAssembly in RegisterAssemblies)
-            if (!RegisterList.Contains(RegisterAssembly))
-                RegisterList.Add(RegisterAssembly);
+        _hostBuilder.ConfigureServices(AddtionalServices);
 
-        return builder;
+        return builder.HostBuilder_Check();
     }
 
-
-    public static async Task CxConsole_RunConsole(this IHostBuilder builder)
+    /// <summary>
+    /// Will register Any Type in the supplied Assembly with a base type of ConsoleBaseProcess and Attribute of CxConsoleInfo
+    /// </summary>
+    /// <param name="builder"></param>
+    /// <param name="RegisterAssemblies"></param>
+    /// <returns></returns>
+    public static ICxConsoleHostBuilder CxConsole_RegisterProcessAssemblies(this ICxConsoleHostBuilder builder, params Assembly[] RegisterAssemblies)
     {
-        if (iHost == null)
-            return;
-                
-        iHost.ConfigureServices(services =>
+        if (RegisterAssemblies?.Length > 0)
+            foreach (var RegAssembly in RegisterAssemblies)
+                _hostBuilder.RegisterAssembly(RegAssembly);
+
+        return builder.HostBuilder_Check();
+    }
+
+    public static async Task CxConsole_RunConsole(this ICxConsoleHostBuilder builder)
+    {
+        //Error if not the correct builder class
+        builder.HostBuilder_Check();
+
+        _hostBuilder.ConfigureServices(services =>
         {
             //Register the Cxservice 
-            services.AddScoped(obj => new CxCommandService(_args));
+            services.AddSingleton(obj => new CxCommandService(_hostBuilder._args));
+
+            services.AddScoped<CxConsoleProcess>();
+
+            services.AddHostedService<CxProcessHostedService>();
+
+            if (_hostBuilder.hasRegistedProcesses)
+                foreach (var item in _hostBuilder._RegisteredProcesses.Values)
+                {
+                    services.AddTransient(item.processType);
+                }
         });
 
-        using var appHost = iHost.Build();
+        using var appHost = _hostBuilder.iHost.Build();
 
         //Run the process 
         await appHost.StartAsync();
@@ -58,7 +82,57 @@ public static class CxConsoleHost
 
         return;
     }
+
+    /// <summary>
+    /// Check to let caller know there impemantation is not supported. 
+    /// </summary>
+    /// <exception cref="Exception">None Supported type get thrown</exception>
+   static ICxConsoleHostBuilder HostBuilder_Check(this ICxConsoleHostBuilder builder)
+    {
+        if (builder.GetType() != typeof(CxConsoleHostBuilder))
+            throw new Exception("The Build Inteface has a mismatch and the process cannot continue. The Interface used is intended for Building the CxConsoleHost only. Outside Impementations are not Supported.");
+
+        return builder;
+    }
 }
+
+
+internal class CxProcessHostedService : IHostedService
+{
+
+    CxConsoleProcess consoleProcess { get; }
+    
+    public CxProcessHostedService(CxConsoleProcess consoleService)
+    {
+        consoleProcess = consoleService;        
+    }
+
+    /// <summary>
+    /// Process The console
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    async Task IHostedService.StartAsync(CancellationToken cancellationToken)
+    {
+        WriteLine();
+        WriteLine();
+
+        await consoleProcess.MainProcess(cancellationToken, CxConsoleHost._hostBuilder._RegisteredProcesses);
+    }
+
+    Task IHostedService.StopAsync(CancellationToken cancellationToken)
+    {
+        WriteLine();
+        WriteLine();
+        //WriteLine($"Process {service?.Process ?? ""} Finished");
+
+        //service.DisplayTimeReportItems();
+
+        return Task.CompletedTask;
+    }
+}
+
+
 
 /*
  

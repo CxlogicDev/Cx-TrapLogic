@@ -3,7 +3,7 @@ using CxUtility.Cx_Console;
 
 //Console.WriteLine("Hello, World!");
 
-const string helloWorld = "hello";
+const string helloWorld = "No current Impementations so just mock one for now";
 
 await CxConsoleHost
     .CxConsole_BuildHost(args)
