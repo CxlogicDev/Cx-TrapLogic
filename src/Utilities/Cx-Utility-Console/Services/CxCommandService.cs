@@ -31,7 +31,7 @@ public sealed record CxCommandService
     public bool getCommandArg(string key, out string val) => _Args.TryGetValue(key, out val);
 
     /// <summary>
-    /// 
+    /// Will use only for Dev and Testing 
     /// </summary>
     internal System.Diagnostics.Stopwatch watch { get; } = new System.Diagnostics.Stopwatch();
 
@@ -40,19 +40,9 @@ public sealed record CxCommandService
     /// </summary>
     internal List<(TimeSpan elapedTime, string MainLine, Func<TimeSpan, string[]> extlines)> elpsn = new List<(TimeSpan elapedTime, string MainLine, Func<TimeSpan, string[]> extlines)>();
 
-
-    private CxCommandService()
-    {
-        //if (!typeof(CxProcessTypes).IsEnum)
-        //    throw new ArgumentException("CxProcessTypes must be an enumerated type");
-
-
-
-    }
-
     //CxProcessTypes
     //CxProcessService
-    public CxCommandService(string[] args) : this()
+    public CxCommandService(string[] args) 
     {
         //CxProcess = args.Length > 0 ? Enum.TryParse<CxProcessTypes>(args[0], true, out var cp) ? cp : default : default;
 
@@ -88,7 +78,8 @@ public sealed record CxCommandService
                 }
         }
 
-        watch.Start();
+        //ToDo: Uncomment when Displau is finished 
+        //watch.Start();
     }
 
     bool hasInterface<_interface, _class>(_class myObj)
