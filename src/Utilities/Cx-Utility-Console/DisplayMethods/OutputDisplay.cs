@@ -221,6 +221,15 @@ public static class OutputDisplay
     }
 
 
+    /// <summary>
+    /// Will Write to the console in using internal methods 
+    /// </summary>
+    /// <param name="CmdServ"></param>
+    public static void Write_lineToConsole(this CxCommandService CmdServ)
+    {
+            
+    }
+
     /*
 
 
