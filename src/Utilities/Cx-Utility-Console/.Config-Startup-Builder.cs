@@ -25,18 +25,28 @@ public static class CxConsoleHost
         return _hostBuilder;
     }
 
-    
+    /* ToDo: allow for a configuration 
+     public static ICxConsoleHostBuilder CxConsole_Configure_Project(ICxConsoleHostBuilder Builder, IConfigurationBuilder _Config)
+    {
+        //Action<HostBuilderContext, IConfigurationBuilder> configureDelegate
+    }
+     
+     */
+
     /// <summary>
     /// This is for the Title and border lines displayed in the out put 
     /// </summary>
     /// <param name="Options">The Title Options To send across All Request</param>
     /// <returns></returns>
-    public static ICxConsoleHostBuilder CxConsole_RegisterTitleLineOptions(this ICxConsoleHostBuilder builder, Action<TitleLineOptions> Options) =>
-        Options is null? builder : builder.CxConsole_RegisterServices(services =>
-        {
-            var icl = services.FirstOrDefault(f => f.ServiceType.Equals(typeof(IConsoleLogger)));
-            if (icl == null) { services.AddScoped<IConsoleLogger, ConsoleLogger>(icl => new ConsoleLogger(Options)); }
-        });
+    public static ICxConsoleHostBuilder CxConsole_RegisterTitleLineOptions(this ICxConsoleHostBuilder builder, Action<TitleLineOptions> Title_Options, Action<ProcessActionHelpInfoOptions> Help_Options)
+    {
+        if (Help_Options != null)
+            ConsoleLogger.default_override_Help_Options = Help_Options;
+        
+        if (Title_Options != null)
+            ConsoleLogger.default_override_Title_Options = Title_Options;
+        return builder;
+    }
 
     public static ICxConsoleHostBuilder CxConsole_RegisterProcessActionHelpInfoOptions(this ICxConsoleHostBuilder builder, Action<ProcessActionHelpInfoOptions> Options)
     {

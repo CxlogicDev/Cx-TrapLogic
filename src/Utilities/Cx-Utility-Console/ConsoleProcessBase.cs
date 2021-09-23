@@ -10,12 +10,13 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
 
     public IConfiguration _Config { get; }
 
-    public IConsoleLogger WriteOutput_Service { get; } = new ConsoleLogger();
+    public IConsoleLogger WriteOutput_Service { get; } 
 
     public ConsoleBaseProcess(CxCommandService CxProcess, IConfiguration config)
     {
         _CxCommandService = CxProcess;
         _Config = config;
+        WriteOutput_Service = new ConsoleLogger(config_TitleLineOptions, config_ProcessActionHelpInfoOptions);
     }
 
     /// <summary>
@@ -75,13 +76,79 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     /// This Method controls Dispaly Info Inside the Start and End Bars
     /// </summary>
     /// <param name="options">Allowed Options</param>
-    protected abstract void config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options);
+    protected virtual void config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options)
+    {
+        var opt = _Config.GetSection("ProcessActionHelpInfoOptions").Get<ProcessActionHelpInfoOptions>();
+
+
+        options.display_SystemHelperArgs = true;
+        options.display_ShowExamples = true;
+
+        options.ProcessDescription = opt?.ProcessDescription ?? "Default Description";
+        options.ExtendInfoLines = opt?.ExtendInfoLines ?? new string[] { };
+    }
 
     /// <summary>
     /// This Method Controls Display Info in the Tiltle Bar
     /// </summary>
     /// <param name="options">The alllowed Options</param>
-    protected abstract void config_TitleLineOptions(TitleLineOptions options);
+    protected virtual void config_TitleLineOptions(TitleLineOptions options)
+    {
+        var opt = _Config.GetSection(nameof(TitleLineOptions)).Get<TitleLineOptions>();
+
+        //options.isEndLine = false;
+        options.Title = opt?.Title ?? "Default Console Title";
+        options.ExtraLines = opt?.ExtraLines ?? new string[] { };
+        options.BorderSize = opt?.BorderSize ?? 150;
+        options.IndentSize = opt?.IndentSize > 0 ? opt.IndentSize : 5;
+
+        var delim = _Config.GetSection(nameof(TitleLineOptions))[nameof(TitleLineOptions.BorderDelim)];
+        if (delim?.Length == 1 && char.TryParse(delim, out char BorderDelim))
+            options.BorderDelim = BorderDelim;
+    }
+
+
+    /*
+     
+     protected override void config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options)
+        {
+            var opt = _Config.GetSection("ProcessActionHelpInfoOptions").Get<ProcessActionHelpInfoOptions>();
+
+
+            options.display_SystemHelperArgs = true;
+            options.display_ShowExamples = true;
+           
+            options.ProcessDescription = opt?.ProcessDescription ?? "Default Description";
+            options.ExtendInfoLines = opt?.ExtendInfoLines ?? new string[] { };           
+        }    
+
+        protected override void config_TitleLineOptions(TitleLineOptions options)
+        {
+
+            var opt = _Config.GetSection(nameof(TitleLineOptions)).Get<TitleLineOptions>();
+
+            options.isEndLine = false;
+            options.Title = opt?.Title ?? "Default Console Title";
+            options.ExtraLines = opt?.ExtraLines ?? new string[] { };
+            options.BorderSize = opt?.BorderSize ?? 150;
+            options.IndentSize = opt?.IndentSize > 0 ? opt.IndentSize : 5;
+
+            var delim = _Config.GetSection(nameof(TitleLineOptions))[nameof(TitleLineOptions.BorderDelim)];
+            if (delim?.Length == 1 && char.TryParse(delim, out char BorderDelim))
+                options.BorderDelim = BorderDelim;
+
+
+            //throw new NotImplementedException();
+        }
+     
+     
+     
+     
+     */
+
+
+
+
 
     /// <summary>
     /// The Action that is ran for the Process

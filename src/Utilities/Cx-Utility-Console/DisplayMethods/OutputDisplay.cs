@@ -21,11 +21,23 @@ public interface IConsoleLogger
 
 internal class ConsoleLogger : IConsoleLogger
 {
-    public TitleLineOptions options { get;  }
+    /// <summary>
+    /// Display title code
+    /// </summary>
+    public TitleLineOptions _Title_Options { get;  }
 
-    public ConsoleLogger(Action<TitleLineOptions> Options)
+    /// <summary>
+    /// Help display 
+    /// </summary>
+    public ProcessActionHelpInfoOptions _Help_Options { get; }
+
+    IConfiguration _Config { get; }
+
+    public ConsoleLogger(IConfiguration Config, Action<TitleLineOptions> Title_Options, Action<ProcessActionHelpInfoOptions> Help_Options)
     {
-        options = new TitleLineOptions(Options);
+        _Config = Config;
+        _Title_Options = new TitleLineOptions(Title_Options ?? (default_override_Title_Options ?? defualt_TitleLineOptions));
+        _Help_Options = new ProcessActionHelpInfoOptions(Help_Options ?? (default_override_Help_Options ?? default_ProcessActionHelpInfoOptions));
     }
 
     void IConsoleLogger.write_Lines(params string[] lines)
@@ -40,24 +52,55 @@ internal class ConsoleLogger : IConsoleLogger
 
     static string indent(int size, char delim = ' ') => new string(' ', size);
 
-    void write_TitleLine(TitleLineOptions options )
+    /// <summary>
+    /// Write a border delim at the size supplied 
+    /// </summary>
+    /// <param name="size"></param>
+    void write_BorderDelim(int size = 1)
     {
-        TitleLineOptions localTitleOps;
+        if (size < 1)
+            return;
+
+        //Write the border delim to the size amount
+        WriteLine(new string(_Title_Options.BorderDelim, size));
+    }
+
+    /// <summary>
+    /// Will write the border with the supplied option chain
+    /// </summary>
+    void write_Border() => write_BorderDelim(_Title_Options.BorderSize);
 
 
-        WriteLine(new string(options.BorderDelim, options.BorderSize));
 
-        if (!options.isEndLine && options.Title.hasCharacters())
+    void write_TitleLine()
+    {
+        write_Border();
+
+        bool writeBottom = false;
+
+        if (_Title_Options.Title.hasCharacters())
         {
-            WriteLine($"{options.BorderDelim}");
-            WriteLine($"{options.BorderDelim}{indent(options.IndentSize > 0 ? options.IndentSize : 5)}{options.Title}");
-            foreach (var eLine in options.ExtraLines)
-            {
-                WriteLine($"{options.BorderDelim}{indent((options.IndentSize > 0 ? options.IndentSize : 5))} {eLine}");
-            }
-            WriteLine($"{options.BorderDelim}");
-            WriteLine(new string(options.BorderDelim, options.BorderSize));
+            writeBottom = true;
+            write_BorderDelim();
+            WriteLine($"{_Title_Options.BorderDelim}{indent(_Title_Options.IndentSize > 0 ? _Title_Options.IndentSize : 5)}{_Title_Options.Title}");            
         }
+
+        if(_Title_Options.ExtraLines?.Length > 0)
+        {
+            writeBottom = true;
+            write_BorderDelim();
+            foreach (var eLine in _Title_Options.ExtraLines)
+            {
+                WriteLine($"{_Title_Options.BorderDelim}{indent((_Title_Options.IndentSize > 0 ? _Title_Options.IndentSize : 5))} {eLine}");
+            }
+        }
+
+        if (writeBottom)
+        {
+            write_BorderDelim();
+            write_Border();
+        }
+
     }
 
     void helper_args(ProcessActionHelpInfoOptions options)
@@ -78,6 +121,143 @@ internal class ConsoleLogger : IConsoleLogger
         if (options.implemented_WriteData2CSVFile)
             WriteLine("     -write-csvFile : Data will be written to the screen and a csv file at the specific path. { Note: the Directory must already Exist DefaultName: [process]_[action].[date(MM/dd/yyy)-time(HH_mm_ss)].csv");
         //,"     "
+    }
+
+
+
+    /*
+     
+     internal static void write_ProcessActionHelpInfo(ProcessHelpInfo helpInfo, Action<ProcessActionHelpInfoOptions> POptions, Action<TitleLineOptions> TOptions)
+    {//string HeaderTitle, string ProcessDescription, ProcessHelpInfo helpInfo, Func<string[]> ExtendInfo_Func = null, Func<string[]> helper_args_Func = null
+
+        ProcessActionHelpInfoOptions ProcessOptions = new ProcessActionHelpInfoOptions(POptions);
+        TitleLineOptions TitleOptions = new TitleLineOptions(TOptions);
+
+        WriteLine();
+        WriteLine();
+
+        write_TitleLine(TitleOptions);
+        WriteLine();
+        WriteLine();
+        WriteLine($"   Description: {ProcessOptions.ProcessDescription}");
+        var ExtendInfo = ProcessOptions.ExtendInfoLines ?? new string[] { };
+
+        if (ExtendInfo.Length > 0)
+        {
+
+            WriteLine();
+
+            foreach (var info in ExtendInfo)
+            {
+                WriteLine($"   -- {info}");
+            }
+        }
+        WriteLine();
+        WriteLine();
+
+        WriteLine("   Available Process Commands");
+        WriteLine();
+
+        foreach (var proAct in helpInfo.ProcessActions)
+        {
+            WriteLine($"   > {proAct._Action}: {proAct.Description}");
+
+            if (proAct.ActionArguments?.Length > 0)
+                foreach (var item in proAct.ActionArguments)
+                {
+                    WriteLine($"          {new string(' ', 4)}arg: {item.key} > Use: {item.description}");
+                }
+            WriteLine();
+        }
+
+        helper_args(ProcessOptions);
+
+        WriteLine();
+        WriteLine();
+
+        if (ProcessOptions.display_ShowExamples)
+        {
+            WriteLine("   Examples: ");
+            WriteLine("    > dotnet run -- [process] [action] [[-arg]...]");
+            WriteLine("    > [Console-App-exe] [process] [action] [[-arg]...]");
+        }
+
+
+        WriteLine();
+
+        //write_TitleLine(TitleOptions with { isEndLine = true });
+    }
+
+    public static void write_ConsoleStage(string[] lines, Action<TitleLineOptions> TOptions, int lineIndent = 10)
+    {
+        TitleLineOptions TitleOptions = new TitleLineOptions(TOptions);
+
+        WriteLine();
+        WriteLine();
+
+        write_TitleLine(TitleOptions);
+        WriteLine();
+        WriteLine();
+
+        foreach (var item in lines)
+            WriteLine($"{new string(' ', lineIndent)} {(item ?? "")}");
+
+        WriteLine();
+        WriteLine();
+
+
+
+        //write_TitleLine(TitleOptions with { isEndLine = true });
+    }
+
+    public static void write_ConsoleStageTable(DisplayTable table, Action<TitleLineOptions> TOptions, int lineIndent = 10)
+    {
+        if (table == null)
+            throw new FormatException($"Could not build the formtted table because the {nameof(DisplayTable)} object is not valid.");
+
+        write_ConsoleStage(table.writeConsoleTableLines(), TOptions, lineIndent);
+    }
+
+     
+     */
+
+
+
+
+
+
+    public static Action<TitleLineOptions>? default_override_Title_Options { get; internal set; } = null;
+    void defualt_TitleLineOptions(TitleLineOptions options)
+    {
+        options.Title = "";
+        options.ExtraLines = new string[0];
+        options.BorderSize = WindowWidth > 0 ? WindowWidth : 100;
+
+        var opt = _Config.GetSection(nameof(TitleLineOptions)).Get<TitleLineOptions>();
+
+        //options.isEndLine = false;
+        options.Title = opt?.Title ?? "";
+        options.ExtraLines = opt?.ExtraLines ?? new string[] { };
+        options.BorderSize = opt?.BorderSize ?? 150;
+        options.IndentSize = opt?.IndentSize > 0 ? opt.IndentSize : 5;
+
+        var delim = _Config.GetSection(nameof(TitleLineOptions))[nameof(TitleLineOptions.BorderDelim)];
+        if (delim?.Length == 1 && char.TryParse(delim, out char BorderDelim))
+            options.BorderDelim = BorderDelim;
+
+
+    }
+
+    public static Action<ProcessActionHelpInfoOptions>? default_override_Help_Options { get; internal set; } = null;
+    void default_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options)
+    {
+        var opt = _Config.GetSection("ProcessActionHelpInfoOptions").Get<ProcessActionHelpInfoOptions>();
+
+        options.display_SystemHelperArgs = true;
+        options.display_ShowExamples = true;
+
+        options.ProcessDescription = opt?.ProcessDescription ?? "";
+        options.ExtendInfoLines = opt?.ExtendInfoLines ?? new string[] { };
     }
 
     /*
@@ -105,7 +285,6 @@ internal class ConsoleLogger : IConsoleLogger
 
 
      */
-
 }
 
 public static class OutputDisplay
@@ -202,7 +381,7 @@ public static class OutputDisplay
 
         WriteLine(new string(options.BorderDelim, options.BorderSize));
 
-        if (!options.isEndLine && options.Title.hasCharacters())
+        if (options.Title.hasCharacters())
         {
             WriteLine($"{options.BorderDelim}");
             WriteLine($"{options.BorderDelim}{indent(options.IndentSize > 0 ? options.IndentSize : 5)}{options.Title}");
@@ -293,7 +472,7 @@ public static class OutputDisplay
 
         WriteLine();
 
-        write_TitleLine(TitleOptions with { isEndLine = true });
+        //write_TitleLine(TitleOptions with { isEndLine = true });
     }
 
     public static void write_ConsoleStage(string[] lines, Action<TitleLineOptions> TOptions, int lineIndent = 10)
@@ -315,7 +494,7 @@ public static class OutputDisplay
 
 
 
-        write_TitleLine(TitleOptions with { isEndLine = true });
+        //write_TitleLine(TitleOptions with { isEndLine = true });
     }
 
     public static void write_ConsoleStageTable(DisplayTable table, Action<TitleLineOptions> TOptions, int lineIndent = 10)

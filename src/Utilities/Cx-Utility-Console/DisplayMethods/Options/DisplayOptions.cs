@@ -3,11 +3,16 @@
 public record TitleLineOptions
 {
     public string Title { get; set; }
-    public bool isEndLine { get; set; } = false;
+    //public bool isEndLine { get; set; } = false;
     public string[] ExtraLines { get; set; } = new string[] { };
     public int BorderSize { get; set; } = 100;// => ExtraLines.Max(d => d.Length)
     public int IndentSize { get; set; } = 5;
     public char BorderDelim { get; set; } = '*';
+
+    public TitleLineOptions()
+    {
+        Title = Title ?? string.Empty;
+    }
 
     public TitleLineOptions(Action<TitleLineOptions> setOptions)
     {
@@ -30,7 +35,7 @@ public record TitleLineOptions
     public TitleLineOptions(string title, params string[] extraLines)
     {
         Title = title;
-        isEndLine = false;
+        //isEndLine = false;
         ExtraLines = extraLines;
         validate();
 
@@ -44,6 +49,13 @@ public record TitleLineOptions
 
 public record ProcessActionHelpInfoOptions
 {
+    public ProcessActionHelpInfoOptions()
+    {
+        ProcessDescription = ProcessDescription ?? string.Empty;
+
+        validate();
+    }
+
     public ProcessActionHelpInfoOptions(Action<ProcessActionHelpInfoOptions> setOptions)
     {
         setOptions?.Invoke(this);
@@ -71,7 +83,7 @@ public record ProcessActionHelpInfoOptions
 
     void validate()
     {
-
+        
     }
 
 }
