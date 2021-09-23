@@ -5,10 +5,7 @@ namespace CxUtility.Cx_Console;
 
 [CxConsoleInfo(nameof(CxConsoleProcess), typeof(CxConsoleProcess), CxRegisterTypes.Register, "The Main starting process that is ran and navigtaes to the calling process")]
 public class CxConsoleProcess : ConsoleBaseProcess
-{
-    internal static string _ProcessHeadTitle { get; set; }
-    internal static string _ProcessDescription { get; set; }
-
+{    
     IServiceProvider services { get; }
 
     public CxConsoleProcess(CxCommandService CxProcess, IServiceProvider Services, IConfiguration config) : base(CxProcess, config)
@@ -18,12 +15,16 @@ public class CxConsoleProcess : ConsoleBaseProcess
 
     protected override void config_ProcessActionHelpInfoOptions(DisplayMethods.ProcessActionHelpInfoOptions options)
     {
-        throw new NotImplementedException();
+        
+
+
+
     }
 
     protected override void config_TitleLineOptions(DisplayMethods.TitleLineOptions options)
     {
-        throw new NotImplementedException();
+        
+    
     }
 
     public override Task ProcessAction(CancellationToken cancellationToken) => Info();
@@ -55,7 +56,20 @@ public class CxConsoleProcess : ConsoleBaseProcess
         return ProcessAction(cancellationToken);
     }
 
-
+    public override Task Info()
+    {
+        WriteLine($"Window-Width: {Console.WindowWidth}; Window-Height: {WindowHeight}");
+        WriteLine($"IsWindows: {OperatingSystem.IsWindows()}");
+        if (OperatingSystem.IsWindows())
+            WindowWidth = Console.LargestWindowWidth;               
+           
+        WriteLine($"Window-Width: {Console.WindowWidth}; Window-Height: {WindowHeight}");
+        WriteLine($"Largest-Window-Height: {Console.LargestWindowHeight}; Largest-Window-Width: {Console.LargestWindowWidth}");
+        WriteLine($"");
+        
+        return Task.CompletedTask;
+        //return base.Info();
+    }
     //public override Task Info()
     //{
     //    /*
@@ -216,6 +230,6 @@ public class CxConsoleProcess : ConsoleBaseProcess
     #endregion
 
 
-    
+
 
 }

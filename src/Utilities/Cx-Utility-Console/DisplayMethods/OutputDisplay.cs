@@ -2,6 +2,112 @@
 
 namespace CxUtility.Cx_Console.DisplayMethods;
 
+/// <summary>
+/// Will Write to the console in using internal methods 
+/// </summary>
+public interface IConsoleLogger
+{
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="lines"></param>
+    void write_Lines(params string[] lines);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    void write_Table();
+}
+
+internal class ConsoleLogger : IConsoleLogger
+{
+    public TitleLineOptions options { get;  }
+
+    public ConsoleLogger(Action<TitleLineOptions> Options)
+    {
+        options = new TitleLineOptions(Options);
+    }
+
+    void IConsoleLogger.write_Lines(params string[] lines)
+    {
+        throw new NotImplementedException();
+    }
+
+    void IConsoleLogger.write_Table()
+    {
+        throw new NotImplementedException();
+    }
+
+    static string indent(int size, char delim = ' ') => new string(' ', size);
+
+    void write_TitleLine(TitleLineOptions options )
+    {
+        TitleLineOptions localTitleOps;
+
+
+        WriteLine(new string(options.BorderDelim, options.BorderSize));
+
+        if (!options.isEndLine && options.Title.hasCharacters())
+        {
+            WriteLine($"{options.BorderDelim}");
+            WriteLine($"{options.BorderDelim}{indent(options.IndentSize > 0 ? options.IndentSize : 5)}{options.Title}");
+            foreach (var eLine in options.ExtraLines)
+            {
+                WriteLine($"{options.BorderDelim}{indent((options.IndentSize > 0 ? options.IndentSize : 5))} {eLine}");
+            }
+            WriteLine($"{options.BorderDelim}");
+            WriteLine(new string(options.BorderDelim, options.BorderSize));
+        }
+    }
+
+    void helper_args(ProcessActionHelpInfoOptions options)
+    {
+
+        if (!options.display_SystemHelperArgs || (!options.implemented_Time_Report && !options.implemented_WriteData2CSVFile && !options.implemented_WriteData2JsonFile))
+            return;
+
+
+        WriteLine();
+        WriteLine();
+
+        WriteLine("   Helper args:");
+        if (options.implemented_Time_Report)
+            WriteLine("     -time-report : Prints out a Time per Action call. The Processes May add to the Time reports for further clarity");
+        if (options.implemented_WriteData2JsonFile)
+            WriteLine("     -write-jsonFile : Data will be written to the screen and a json file at the specific path. { Note: the Directory must already Exist DefaultName: [process]_[action].[date(MM/dd/yyy)-time(HH_mm_ss)].json");
+        if (options.implemented_WriteData2CSVFile)
+            WriteLine("     -write-csvFile : Data will be written to the screen and a csv file at the specific path. { Note: the Directory must already Exist DefaultName: [process]_[action].[date(MM/dd/yyy)-time(HH_mm_ss)].csv");
+        //,"     "
+    }
+
+    /*
+     Cross Platform: 
+
+    public static string Title { get; set; }
+    public static void Beep();
+    public static void Clear();
+    public static bool KeyAvailable { get; }
+    public static int CursorLeft { get; set; }
+    public static int CursorTop { get; set; }
+    public static void SetCursorPosition(int left, int top);
+    public static int WindowHeight { get; set; }
+    public static int WindowWidth { get; set; }
+    public static int WindowLeft { get; set; }
+    public static int WindowTop { get; set; }
+    
+    
+
+
+    public static int BufferHeight { get; set; }
+    public static int BufferWidth { get; set; }
+    public static int LargestWindowHeight { get; }
+    public static int LargestWindowWidth { get; }
+
+
+     */
+
+}
+
 public static class OutputDisplay
 {
     #region Info Helper Methods
@@ -225,10 +331,10 @@ public static class OutputDisplay
     /// Will Write to the console in using internal methods 
     /// </summary>
     /// <param name="CmdServ"></param>
-    public static void Write_lineToConsole(this CxCommandService CmdServ)
-    {
+    //public static void Write_lineToConsole(this Microsoft.Extensions.Logging.ILogger logger)
+    //{
             
-    }
+    //}
 
     /*
 

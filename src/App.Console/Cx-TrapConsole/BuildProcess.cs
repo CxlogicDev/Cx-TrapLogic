@@ -11,7 +11,9 @@ internal class BuildProcess : ConsoleBaseProcess
 
     public override Task ProcessAction(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        Console.WriteLine($"WindowBuffer-Width: {Console.BufferWidth}; WindowBuffer-Height: {Console.BufferHeight}");
+
+        return Task.CompletedTask;
     }
 
     protected override void config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options) => 

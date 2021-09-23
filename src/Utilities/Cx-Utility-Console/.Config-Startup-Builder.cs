@@ -1,5 +1,6 @@
 ﻿global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Hosting;
+using CxUtility.Cx_Console.DisplayMethods;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 namespace CxUtility.Cx_Console;
@@ -22,6 +23,26 @@ public static class CxConsoleHost
     {
         _hostBuilder = new CxConsoleHostBuilder(args);       
         return _hostBuilder;
+    }
+
+    
+    /// <summary>
+    /// This is for the Title and border lines displayed in the out put 
+    /// </summary>
+    /// <param name="Options">The Title Options To send across All Request</param>
+    /// <returns></returns>
+    public static ICxConsoleHostBuilder CxConsole_RegisterTitleLineOptions(this ICxConsoleHostBuilder builder, Action<TitleLineOptions> Options) =>
+        Options is null? builder : builder.CxConsole_RegisterServices(services =>
+        {
+            var icl = services.FirstOrDefault(f => f.ServiceType.Equals(typeof(IConsoleLogger)));
+            if (icl == null) { services.AddScoped<IConsoleLogger, ConsoleLogger>(icl => new ConsoleLogger(Options)); }
+        });
+
+    public static ICxConsoleHostBuilder CxConsole_RegisterProcessActionHelpInfoOptions(this ICxConsoleHostBuilder builder, Action<ProcessActionHelpInfoOptions> Options)
+    {
+
+
+        return builder;
     }
 
     /// <summary>
@@ -51,6 +72,18 @@ public static class CxConsoleHost
         return builder.HostBuilder_Check();
     }
 
+    /// <summary>
+    /// Check to let caller know there impemantation is not supported. 
+    /// </summary>
+    /// <exception cref="Exception">None Supported type get thrown</exception>
+    static ICxConsoleHostBuilder HostBuilder_Check(this ICxConsoleHostBuilder builder)
+    {
+        if (builder.GetType() != typeof(CxConsoleHostBuilder))
+            throw new Exception("The Build Inteface has a mismatch and the process cannot continue. The Interface used is intended for Building the CxConsoleHost only. Outside Impementations are not Supported.");
+
+        return builder;
+    }
+
     public static async Task CxConsole_RunConsole(this ICxConsoleHostBuilder builder)
     {
         //Error if not the correct builder class
@@ -58,7 +91,7 @@ public static class CxConsoleHost
 
         _hostBuilder.ConfigureServices(services =>
         {
-            //Register the Cxservice 
+            //Register the CxService 
             services.AddSingleton(obj => new CxCommandService(_hostBuilder._args));
 
             services.AddScoped<CxConsoleProcess>();
@@ -67,9 +100,7 @@ public static class CxConsoleHost
 
             if (_hostBuilder.hasRegistedProcesses)
                 foreach (var item in _hostBuilder._RegisteredProcesses.Values)
-                {
-                    services.AddTransient(item.processType);
-                }
+                    services.AddTransient(item.processType);                
         });
 
         using var appHost = _hostBuilder.iHost.Build();
@@ -83,17 +114,6 @@ public static class CxConsoleHost
         return;
     }
 
-    /// <summary>
-    /// Check to let caller know there impemantation is not supported. 
-    /// </summary>
-    /// <exception cref="Exception">None Supported type get thrown</exception>
-   static ICxConsoleHostBuilder HostBuilder_Check(this ICxConsoleHostBuilder builder)
-    {
-        if (builder.GetType() != typeof(CxConsoleHostBuilder))
-            throw new Exception("The Build Inteface has a mismatch and the process cannot continue. The Interface used is intended for Building the CxConsoleHost only. Outside Impementations are not Supported.");
-
-        return builder;
-    }
 }
 
 

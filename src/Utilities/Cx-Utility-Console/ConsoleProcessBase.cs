@@ -10,6 +10,8 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
 
     public IConfiguration _Config { get; }
 
+    public IConsoleLogger WriteOutput_Service { get; } = new ConsoleLogger();
+
     public ConsoleBaseProcess(CxCommandService CxProcess, IConfiguration config)
     {
         _CxCommandService = CxProcess;
