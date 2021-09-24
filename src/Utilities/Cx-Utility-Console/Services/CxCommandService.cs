@@ -28,7 +28,7 @@ public sealed record CxCommandService
 
     public (string arg, string value)[] Args => _Args.Select(s => (s.Key, s.Value)).ToArray();
 
-    public bool getCommandArg(string key, out string val) => _Args.TryGetValue(key, out val);
+    public bool getCommandArg(string key, out string? val) => _Args.TryGetValue(key, out val);
 
     /// <summary>
     /// Will use only for Dev and Testing 
@@ -42,7 +42,7 @@ public sealed record CxCommandService
 
     //CxProcessTypes
     //CxProcessService
-    public CxCommandService(string[] args) 
+    public CxCommandService(string[] args)
     {
         //CxProcess = args.Length > 0 ? Enum.TryParse<CxProcessTypes>(args[0], true, out var cp) ? cp : default : default;
 
@@ -76,7 +76,12 @@ public sealed record CxCommandService
                         else
                             _Args.TryAdd(_args[i], _args[i + 1]);//Add the Value to the Key
                 }
+
+            //return;
         }
+
+        Process = Process ?? string.Empty;
+        Command = Command ?? string.Empty;
 
         //ToDo: Uncomment when Displau is finished 
         //watch.Start();
@@ -159,16 +164,17 @@ public sealed record CxCommandService
     /// </summary>
     //internal string ProcessAction => CxProcess != CxProcessTypes.List ? _args.FirstOrDefault() ?? "" : "";
 
+    /*
     /// <summary>
     /// Will save a Elaped Time for displaying report at the end
     /// </summary>
     /// <param name="time">The Elaped time</param>
     /// <param name="DisplayLine"></param>
     /// <param name="addtionalInfoLines">Any data added After the Time Displays</param>
-    public void addTimeReportItem(string DisplayLine, Func<TimeSpan, string[]> addtionalInfoLines = null) =>
+    public void addTimeReportItem(string DisplayLine, Func<TimeSpan, string[]>? addtionalInfoLines = null) =>
         elpsn.Add((watch.Elapsed, DisplayLine, addtionalInfoLines));
     //"Total Sec: {elapsed} Sec.", "Total Sec: {elapsed} MiliSec."
-
+    //*/
 
     /* ToDo: Build out the following Logic In adifferent way
     /// <summary>

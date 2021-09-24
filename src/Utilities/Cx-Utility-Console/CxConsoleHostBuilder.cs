@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
-
 namespace CxUtility.Cx_Console;
 
 public interface ICxConsoleHostBuilder { }
@@ -14,11 +14,33 @@ internal sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder
     {
         _args = args ?? new string[0];
         iHost = Host.CreateDefaultBuilder(_args);
+
+        iHost.ConfigureLogging((hbld, cfg_Log) => {
+
+           
+
+            cfg_Log.SetMinimumLevel(LogLevel.None);
+
+            //cfg_Log.ClearProviders();
+            //cfg_Log.AddConsole();
+
+            //cfg_Log.Properties
+
+        });
+
     }
 
     internal ICxConsoleHostBuilder ConfigureServices(Action<IServiceCollection> AddtionalServices)
     {
         iHost.ConfigureServices(AddtionalServices);
+        return this;
+    }
+
+    internal ICxConsoleHostBuilder ConfigBuilder(Action<IConfigurationBuilder> builder)
+    {
+        if (builder is not null)
+            iHost.ConfigureAppConfiguration(builder);
+
         return this;
     }
 

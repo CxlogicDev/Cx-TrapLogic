@@ -33,7 +33,7 @@ public sealed class CxConsoleInfoAttribute : Attribute
     /// Keys are the Action Method Name
     /// Values are the Display Info
     /// </summary>
-    internal Dictionary<string, (CxConsoleActionAttribute _attribute, System.Reflection.MethodInfo method)> ProcessActions { get; }
+    internal Dictionary<string, (CxConsoleActionAttribute _attribute, System.Reflection.MethodInfo method)> ProcessActions { get; } = new();
 
     /// <summary>
     /// The Description Displayed out in the Console Processs Info List
@@ -65,12 +65,22 @@ public sealed class CxConsoleInfoAttribute : Attribute
             description = Description;
 
             //
-            ProcessActions = ProcessType.GetMethods()
+            foreach (var i in ProcessType.GetMethods()
                 .Where(w => w.GetCustomAttributes(typeof(CxConsoleActionAttribute), true)?.Length > 0)
-                .Select(s => (method: s, _act: (CxConsoleActionAttribute)s.GetCustomAttributes(typeof(CxConsoleActionAttribute), true).FirstOrDefault()))
-                .ToDictionary(k => k._act.name, v => (v._act, v.method));
-            //.Select(s => (CxConsoleActionAttribute)s.GetCustomAttributes(typeof(CxConsoleActionAttribute), true).FirstOrDefault())
-            //.ToArray();
+                .Select(s => (method: s, _act: s.GetCustomAttributes(typeof(CxConsoleActionAttribute), true).FirstOrDefault() as CxConsoleActionAttribute)))
+            {
+                if (i._act is null)
+                    continue;
+
+                ProcessActions[i._act.name] = (i._act, i.method);
+            }
+
+
+            //ProcessActions = ProcessType.GetMethods()
+            //    .Where(w => w.GetCustomAttributes(typeof(CxConsoleActionAttribute), true)?.Length > 0)
+            //    .Select(s => (method: s, _act: s.GetCustomAttributes(typeof(CxConsoleActionAttribute), true).FirstOrDefault() as CxConsoleActionAttribute))                
+            //    .ToDictionary(k => k._act.name, v => (v._act, v.method));
+            
 
 
 
@@ -84,8 +94,9 @@ public sealed class CxConsoleInfoAttribute : Attribute
 
             return;
         }
+        
 
-        //throw new ArgumentException($"The Class {ProcessType.Name} must be a base type of {typeof(ConsoleBaseProcess)}!!!!");
+        throw new ArgumentException($"The Class {ProcessType.Name} must be a base type off {typeof(ConsoleBaseProcess)}!!!!");
     }
 }
 

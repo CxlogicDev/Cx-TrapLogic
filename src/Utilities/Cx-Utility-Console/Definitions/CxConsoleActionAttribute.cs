@@ -39,7 +39,7 @@ public sealed class CxConsoleActionAttribute : System.Attribute
     {
         name = Name;
         description = Description;
-        isActive = IsActive;
+        //isActive = IsActive;
         registerType = RegisterType;
     }
 }

@@ -26,6 +26,30 @@ public static class ConsoleUtility
     internal static CxConsoleActionArgAttribute[] getInfoActionArgs(this MethodInfo me) =>
         me.GetCustomAttributes<CxConsoleActionArgAttribute>(true).ToArray();
 
+    internal static MethodInfo? get_Command(this ConsoleBaseProcess c_Process, CxCommandService _CommandService)
+    {
+        
+        if (_CommandService == null || c_Process == null || !_CommandService.isValid())
+            return null;
+
+        /*
+              var result = item.Value.method.getInfoActionArgs().Where(w => w.arg_isActive).Select(s => new CommandArgsHelpInfo(s.arg_Key, s.arg_Description, s.arg_Type));
+             */
+
+        CxConsoleInfoAttribute? InfoAttribute = c_Process.getInfoAttribute();
+
+        if (InfoAttribute == null)
+            return null;
+
+
+        var (_attribute, Result) = InfoAttribute.ProcessActions[_CommandService.Command];
+
+        if (_attribute == null || _attribute.registerType == CxRegisterTypes.Skip)
+            return null;
+
+        return Result;
+    }
+
     //internal static ProcessHelpInfo pull_InfoDisplay(this ConsoleBaseProcess process)
     //{
 

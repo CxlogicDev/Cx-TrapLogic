@@ -10,10 +10,11 @@ await CxConsoleHost
         //Write any service that is needed for process in your console Services
 
     })
-    .CxConsole_RegisterTitleLineOptions(a => {
+    .CxConsole_RegisterOptions(a =>
+    {
         a.Title = "Test Title";
-        a.BorderDelim = '*';
-    })
+        a.BorderDelim = '+';
+    }, default)
     .CxConsole_RegisterProcessAssemblies(typeof(BuildProcess).Assembly)
     .CxConsole_RunConsole();
 

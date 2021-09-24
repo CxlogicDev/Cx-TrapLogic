@@ -3,7 +3,7 @@
 /// <summary>
 /// A method for displaying Out a Table View
 /// </summary>
-public record TableHeaderItem(string Title, System.Reflection.PropertyInfo objectPlace)
+public record TableHeaderItem(string Title, System.Reflection.PropertyInfo? objectPlace)
 {
     /// <summary>
     /// Calculated Max Column Char Size based on biggest display string Length. Limit max of 100 Chars. 
@@ -13,8 +13,10 @@ public record TableHeaderItem(string Title, System.Reflection.PropertyInfo objec
 
 public record DisplayTable
 {
-
+    //ToDo: Handle Null Conditions 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     private DisplayTable()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         //validate();
     }
@@ -92,18 +94,20 @@ public record DisplayTable
 
     List<TableRow> Rows { get; } = new List<TableRow>();
 
-    private Type TableType => tableType();
-    private Type tableType()
+    private Type? TableType
     {
-        if (TableColumn.Length > 0)
+        get
         {
-            var tType = TableColumn.Where(w => !w.Title.Equals("-ct")).Select(s => s.objectPlace.DeclaringType).Distinct().ToArray();
+            if (TableColumn.Length > 0)
+            {
+                var tType = TableColumn.Where(w => !w.Title.Equals("-ct") && w.objectPlace != null).Select(s => s.objectPlace?.DeclaringType).Distinct().ToArray();
 
-            if (tType.Length == 1)
-                return tType.FirstOrDefault();
+                if (tType.Length == 1)
+                    return tType.FirstOrDefault();
+            }
+
+            throw new FormatException("The Table Is not formatted correctly. There Are Multiple different Column Types. The table Must have a Single Display class or record");
         }
-
-        throw new FormatException("The Table Is not formatted correctly. There Are Multiple different Column Types. The table Must have a Single Display class or record");
     }
 
     /// <summary>
@@ -118,12 +122,12 @@ public record DisplayTable
 
         var RowTypes = rowobjects.Select(s => s.GetType()).Distinct();
         if (RowTypes.Count() > 1)//
-            throw new FormatException($"The Table rowObjects must be of the same type used to calculate the TableHeaderItems. ColumnType: {TableType.FullName}; Row Types Found: {string.Join(", ", RowTypes.Select(s => s.FullName))}");
+            throw new FormatException($"The Table rowObjects must be of the same type used to calculate the TableHeaderItems. ColumnType: {TableType?.FullName}; Row Types Found: {string.Join(", ", RowTypes.Select(s => s.FullName))}");
 
         var RowType = RowTypes.FirstOrDefault();
 
         if (RowType != TableType)
-            throw new FormatException($"The Row Type: [{RowType.FullName}] does not match the Header Type [{TableType.FullName}] ");
+            throw new FormatException($"The Row Type: [{RowType?.FullName}] does not match the Header Type [{TableType?.FullName}] ");
 
         int ct = Rows.Count();
 
@@ -152,7 +156,7 @@ public record DisplayTable
                 return hItm.MaxValueCount;
             }
 
-            var val = hItm.objectPlace.GetValue(iTtem.rowValue)?.ToString() ?? "";
+            var val = hItm.objectPlace?.GetValue(iTtem.rowValue)?.ToString() ?? "";
 
             hItm.MaxValueCount = val.Length < hItm.MaxValueCount ? hItm.MaxValueCount : val.Length;
 
@@ -194,7 +198,7 @@ public record DisplayTable
                 return $"{new string(' ', hItm.MaxValueCount - iTtem.rowId.ToString().Length)}{iTtem.rowId}";
             }
 
-            var val = hItm.objectPlace.GetValue(iTtem.rowValue)?.ToString() ?? "";
+            var val = hItm.objectPlace?.GetValue(iTtem.rowValue)?.ToString() ?? "";
 
             //hItm.MaxValueCount = val.Length < hItm.MaxValueCount ? hItm.MaxValueCount : val.Length;
 

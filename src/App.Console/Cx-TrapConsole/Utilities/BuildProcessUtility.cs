@@ -10,7 +10,7 @@ internal static class BuildProcessUtility
     /// </summary>
     /// <param name="options">set options to set</param>
     /// <param name="processChanges">The the process changes</param>
-    public static void _config_ProcessActionHelpInfoOptions(this ConsoleBaseProcess me, ProcessActionHelpInfoOptions options, Action<ProcessActionHelpInfoOptions> processChanges = null)
+    public static void _config_ProcessActionHelpInfoOptions(this ConsoleBaseProcess me, ProcessActionHelpInfoOptions options)
     {
         options.display_SystemHelperArgs = false;
         options.display_ShowExamples = false;
@@ -21,7 +21,7 @@ internal static class BuildProcessUtility
 
         options.ExtendInfoLines = new string[] { };
 
-        processChanges?.Invoke(options);
+        //processChanges?.Invoke(options);
     }
 
     /// <summary>
@@ -29,13 +29,13 @@ internal static class BuildProcessUtility
     /// </summary>
     /// <param name="options">set options to set</param>
     /// <param name="processChanges">The the process changes</param>
-    public static void _config_TitleLineOptions(this ConsoleBaseProcess me, TitleLineOptions options, Action<TitleLineOptions> processChanges = null)
+    public static void _config_TitleLineOptions(this ConsoleBaseProcess me, TitleLineOptions options)
     {
         //CxCommandService _CxProcess
         //IConfiguration _Config
         var opt = me._Config.GetSection(nameof(TitleLineOptions)).Get<TitleLineOptions>();
 
-        options.isEndLine = false;
+        //options.isEndLine = false;
         options.Title = opt?.Title ?? "Project Process Console";// "Website Processes"
 
         int ct = 0;
@@ -64,7 +64,7 @@ internal static class BuildProcessUtility
         //    options.BorderDelim = BorderDelim;
 
 
-        processChanges?.Invoke(options);
+        //processChanges?.Invoke(options);
 
     }
 

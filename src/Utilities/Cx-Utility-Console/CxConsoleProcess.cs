@@ -12,24 +12,10 @@ public class CxConsoleProcess : ConsoleBaseProcess
     {
         services = Services;
     }
-
-    protected override void config_ProcessActionHelpInfoOptions(DisplayMethods.ProcessActionHelpInfoOptions options)
-    {
-        
-
-
-
-    }
-
-    protected override void config_TitleLineOptions(DisplayMethods.TitleLineOptions options)
-    {
-        
     
-    }
+    //public override Task ProcessAction(CancellationToken cancellationToken) => Info();
 
-    public override Task ProcessAction(CancellationToken cancellationToken) => Info();
-
-    public Task MainProcess(CancellationToken cancellationToken, Dictionary<string, CxConsoleInfoAttribute> _RegisteredProcesses)
+    public Task MainProcess_Async(CancellationToken cancellationToken, Dictionary<string, CxConsoleInfoAttribute> _RegisteredProcesses)
     {
         if (_CxCommandService.isValid() && _RegisteredProcesses.TryGetValue(_CxCommandService.Process, out CxConsoleInfoAttribute? registed))//_CxProcess.Process.hasCharacters()
         {
@@ -47,7 +33,7 @@ public class CxConsoleProcess : ConsoleBaseProcess
             //Need to look for the Registed command
             if (!_CxCommandService.isHelpCall() &&
                 registed.ProcessActions.TryGetValue(_CxCommandService.Command ?? "026c27a5-748b-4bee-b890-5178c0725eb2", out var cmd) &&
-                cmd._attribute.isActive)
+                /*cmd._attribute.isActive &&*/ cmd._attribute.registerType != CxRegisterTypes.Skip)
                 return service.ProcessAction(cancellationToken);
 
             return service.Info();
@@ -56,20 +42,22 @@ public class CxConsoleProcess : ConsoleBaseProcess
         return ProcessAction(cancellationToken);
     }
 
-    public override Task Info()
-    {
-        WriteLine($"Window-Width: {Console.WindowWidth}; Window-Height: {WindowHeight}");
-        WriteLine($"IsWindows: {OperatingSystem.IsWindows()}");
-        if (OperatingSystem.IsWindows())
-            WindowWidth = Console.LargestWindowWidth;               
+    /**/
+    //public override Task Info()
+    //{
+    //    WriteLine($"Window-Width: {Console.WindowWidth}; Window-Height: {WindowHeight}");
+    //    WriteLine($"IsWindows: {OperatingSystem.IsWindows()}");
+    //    if (OperatingSystem.IsWindows())
+    //        WindowWidth = Console.LargestWindowWidth;               
            
-        WriteLine($"Window-Width: {Console.WindowWidth}; Window-Height: {WindowHeight}");
-        WriteLine($"Largest-Window-Height: {Console.LargestWindowHeight}; Largest-Window-Width: {Console.LargestWindowWidth}");
-        WriteLine($"");
+    //    WriteLine($"Window-Width: {Console.WindowWidth}; Window-Height: {WindowHeight}");
+    //    WriteLine($"Largest-Window-Height: {Console.LargestWindowHeight}; Largest-Window-Width: {Console.LargestWindowWidth}");
+    //    WriteLine($"");
         
-        return Task.CompletedTask;
-        //return base.Info();
-    }
+    //    //return Task.CompletedTask;
+    //    return base.Info();
+    //}
+    /**/
     //public override Task Info()
     //{
     //    /*

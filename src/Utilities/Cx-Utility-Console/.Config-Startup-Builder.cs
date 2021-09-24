@@ -14,43 +14,35 @@ public static class CxConsoleHost
 #pragma warning restore CS8618 
 
     /// <summary>
-    /// Build the Cx Console Parts 
+    /// Build the Cx Console Host and retrurns a builder. 
     /// </summary>
-    /// <param name="registerAssemblies"></param>
-    /// <param name="args"></param>
-    /// <returns></returns>
-    public static ICxConsoleHostBuilder CxConsole_BuildHost(string[] args)
+    /// <param name="args">The start up args</param>
+    /// <param name="_ConfigBuilder">The Config Builder to build any services</param>
+    public static ICxConsoleHostBuilder CxConsole_BuildHost(string[] args, Action<IConfigurationBuilder>? _ConfigBuilder = default)
     {
-        _hostBuilder = new CxConsoleHostBuilder(args);       
+        _hostBuilder = new CxConsoleHostBuilder(args);   
+        if(_ConfigBuilder is not null)
+            _hostBuilder.ConfigBuilder(_ConfigBuilder);
+
+        //if (OperatingSystem.IsWindows())
+        //    WindowWidth = LargestWindowWidth;
+
         return _hostBuilder;
     }
-
-    /* ToDo: allow for a configuration 
-     public static ICxConsoleHostBuilder CxConsole_Configure_Project(ICxConsoleHostBuilder Builder, IConfigurationBuilder _Config)
-    {
-        //Action<HostBuilderContext, IConfigurationBuilder> configureDelegate
-    }
-     
-     */
 
     /// <summary>
     /// This is for the Title and border lines displayed in the out put 
     /// </summary>
-    /// <param name="Options">The Title Options To send across All Request</param>
-    /// <returns></returns>
-    public static ICxConsoleHostBuilder CxConsole_RegisterTitleLineOptions(this ICxConsoleHostBuilder builder, Action<TitleLineOptions> Title_Options, Action<ProcessActionHelpInfoOptions> Help_Options)
+    /// <param name="builder">The Host Builder</param>
+    /// <param name="Title_Options">The Title Options To send across All Request</param>
+    /// <param name="Help_Options">The Help Options to send across All Request</param>
+    public static ICxConsoleHostBuilder CxConsole_RegisterOptions(this ICxConsoleHostBuilder builder, Action<TitleLineOptions>? Title_Options, Action<ProcessActionHelpInfoOptions>? Help_Options)
     {
         if (Help_Options != null)
-            ConsoleLogger.default_override_Help_Options = Help_Options;
+            CxLogService.default_override_Help_Options = Help_Options;
         
         if (Title_Options != null)
-            ConsoleLogger.default_override_Title_Options = Title_Options;
-        return builder;
-    }
-
-    public static ICxConsoleHostBuilder CxConsole_RegisterProcessActionHelpInfoOptions(this ICxConsoleHostBuilder builder, Action<ProcessActionHelpInfoOptions> Options)
-    {
-
+            CxLogService.default_override_Title_Options = Title_Options;
 
         return builder;
     }
@@ -70,9 +62,8 @@ public static class CxConsoleHost
     /// <summary>
     /// Will register Any Type in the supplied Assembly with a base type of ConsoleBaseProcess and Attribute of CxConsoleInfo
     /// </summary>
-    /// <param name="builder"></param>
-    /// <param name="RegisterAssemblies"></param>
-    /// <returns></returns>
+    /// <param name="builder">The Host Builder</param>
+    /// <param name="RegisterAssemblies">The Assemblies to add to the console</param>
     public static ICxConsoleHostBuilder CxConsole_RegisterProcessAssemblies(this ICxConsoleHostBuilder builder, params Assembly[] RegisterAssemblies)
     {
         if (RegisterAssemblies?.Length > 0)
@@ -83,17 +74,26 @@ public static class CxConsoleHost
     }
 
     /// <summary>
-    /// Check to let caller know there impemantation is not supported. 
+    /// Check to Error if the call is trying to implement there own Host builder. 
     /// </summary>
+    /// <param name="builder">The Host Builder</param> 
     /// <exception cref="Exception">None Supported type get thrown</exception>
     static ICxConsoleHostBuilder HostBuilder_Check(this ICxConsoleHostBuilder builder)
     {
+        /*
+          There is no supported need at this point for implementing own custome builder.
+         */
+
         if (builder.GetType() != typeof(CxConsoleHostBuilder))
             throw new Exception("The Build Inteface has a mismatch and the process cannot continue. The Interface used is intended for Building the CxConsoleHost only. Outside Impementations are not Supported.");
 
         return builder;
     }
 
+    /// <summary>
+    /// The Build and run process for the console
+    /// </summary>
+    /// <param name="builder">The Host Builder</param>
     public static async Task CxConsole_RunConsole(this ICxConsoleHostBuilder builder)
     {
         //Error if not the correct builder class
@@ -147,7 +147,7 @@ internal class CxProcessHostedService : IHostedService
         WriteLine();
         WriteLine();
 
-        await consoleProcess.MainProcess(cancellationToken, CxConsoleHost._hostBuilder._RegisteredProcesses);
+        await consoleProcess.MainProcess_Async(cancellationToken, CxConsoleHost._hostBuilder._RegisteredProcesses);
     }
 
     Task IHostedService.StopAsync(CancellationToken cancellationToken)
