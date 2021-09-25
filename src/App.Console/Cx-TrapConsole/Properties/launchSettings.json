@@ -1,0 +1,17 @@
+{
+  "profiles": {
+    "Cx-TrapConsole": {
+      "commandName": "Project",
+      "commandLineArgs": " -h"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "environmentVariables": {},
+      "distributionName": ""
+    },
+    "Cx-TrapConsole-BuildProcess": {
+      "commandName": "Project",
+      "commandLineArgs": "buildprocess -h"
+    }
+  }
+}

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CxUtility.Cx_Console.DisplayMethods;
+using Microsoft.Extensions.Configuration;
 
 namespace CxUtility.Cx_Console;
 
@@ -17,7 +18,7 @@ public class CxConsoleProcess : ConsoleBaseProcess
 
     public Task MainProcess_Async(CancellationToken cancellationToken, Dictionary<string, CxConsoleInfoAttribute> _RegisteredProcesses)
     {
-        if (_CxCommandService.isValid() && _RegisteredProcesses.TryGetValue(_CxCommandService.Process, out CxConsoleInfoAttribute? registed))//_CxProcess.Process.hasCharacters()
+        if (_CxCommandService.isValid() && _RegisteredProcesses.TryGetValue(_CxCommandService.Process, out CxConsoleInfoAttribute? registed) && registed != null)//_CxProcess.Process.hasCharacters()
         {
             //WriteLine($"Process: {_CxProcess.Process}; Action: {_CxProcess.Command ?? "None"}; Arguments: {(_CxProcess._Args.Count > 0 ? string.Join(" ", _CxProcess._Args.Keys) : "")}");
 
@@ -39,24 +40,19 @@ public class CxConsoleProcess : ConsoleBaseProcess
             return service.Info();
         }
 
-        return ProcessAction(cancellationToken);
+        return Info();
     }
 
     /**/
-    //public override Task Info()
-    //{
-    //    WriteLine($"Window-Width: {Console.WindowWidth}; Window-Height: {WindowHeight}");
-    //    WriteLine($"IsWindows: {OperatingSystem.IsWindows()}");
-    //    if (OperatingSystem.IsWindows())
-    //        WindowWidth = Console.LargestWindowWidth;               
-           
-    //    WriteLine($"Window-Width: {Console.WindowWidth}; Window-Height: {WindowHeight}");
-    //    WriteLine($"Largest-Window-Height: {Console.LargestWindowHeight}; Largest-Window-Width: {Console.LargestWindowWidth}");
-    //    WriteLine($"");
-        
-    //    //return Task.CompletedTask;
-    //    return base.Info();
-    //}
+    public override Task Info()
+    {
+        //Will write out the info 
+        //OutputDisplay.write_ProcessActionHelpInfo(, config_ProcessActionHelpInfoOptions, config_TitleLineOptions);
+
+        WriteOutput_Service.write_ProcessActionHelpInfo(_HelpInfoFormat());
+
+        return Task.CompletedTask;
+    }
     /**/
     //public override Task Info()
     //{
@@ -101,31 +97,30 @@ public class CxConsoleProcess : ConsoleBaseProcess
 
     /**/
 
-    //protected override ProcessHelpInfo HelpInfoFormat()
-    //{
+    protected ProcessHelpInfo _HelpInfoFormat()
+    {
 
-    //    /*
-    //        This is were I need to display Either Default something or an override to show the registered methods and Calls             
-    //     */
+        /*
+            This is were I need to display Either Default something or an override to show the registered methods and Calls             
+         */
 
-    //    if (hasRegistedProcesses)//
-    //    {
-    //        //Over and return 
-    //        var InfoHelp = base.HelpInfoFormat();
+        if (CxConsoleHost._hostBuilder.hasRegistedProcesses)//
+        {
+            //Over and return 
+            var InfoHelp = base.HelpInfoFormat();
 
-    //        foreach (var item in _RegisteredProcesses)
-    //        {
-    //            InfoHelp.addActionHelpInfo(new ProcessActionHelpInfo(item.Value.ProcessCallName, item.Value.Description));
-    //        }
+            foreach (var item in CxConsoleHost._hostBuilder._RegisteredProcesses)
+            {
+                InfoHelp.addProcessActionHelpInfo(new CommandHelpInfo(item.Value.processCallName, item.Value.description, item.Value.registerType));
+            }
+
+            return InfoHelp;
+        }
 
 
-    //        return InfoHelp;
-    //    }
-
-
-    //    //Show a default of Something
-    //    return base.HelpInfoFormat();
-    //}
+        //Show a default of Something
+        return base.HelpInfoFormat();
+    }
 
     /**/
 

@@ -11,16 +11,44 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     public IConfiguration _Config { get; }
 
     /// <summary>
+    /// The Info Attribute attched to the Process Class.
+    /// </summary>
+    protected CxConsoleInfoAttribute? _CxInfo => this.getInfoAttribute();
+
+    protected CxConsoleActionAttribute? _CxCommandInfo => (_CxInfo?.ProcessActions.TryGetValue(_CxCommandService.Command, out var cmdInfo) ?? false )? cmdInfo._attribute : default;
+
+    /// <summary>
     /// Auto init uses internal methods to write to Screen 
     /// </summary>
     public ICxLogService WriteOutput_Service { get; } 
 
+    //public ConsoleBaseProcess(CxCommandService CxProcess, IConfiguration config)
+    //{
+    //    _CxCommandService = CxProcess;
+    //    _Config = config;
+    //    WriteOutput_Service = new CxLogService(_Config, null, null);
+    //}
+
+    /// <summary>
+    /// Set base of the process
+    /// </summary>
+    /// <param name="CxProcess">The Command service</param>
+    /// <param name="config">The set up config</param>
+    /// <param name="use_config_TitleLineOptions">Tells The Base to config the title to using the Default </param>
+    /// <param name="use_config_ProcessActionHelpInfoOptions"></param>
     public ConsoleBaseProcess(CxCommandService CxProcess, IConfiguration config)
     {
         _CxCommandService = CxProcess;
         _Config = config;
         WriteOutput_Service = new CxLogService(_Config, config_TitleLineOptions, config_ProcessActionHelpInfoOptions);
     }
+
+    //public ConsoleBaseProcess(CxCommandService CxProcess, IConfiguration config, Action<TitleLineOptions>? config_TitleLineOptions, Action<ProcessActionHelpInfoOptions>? config_ProcessActionHelpInfoOptions)
+    //{
+    //    _CxCommandService = CxProcess;
+    //    _Config = config;
+    //    WriteOutput_Service = new CxLogService(_Config, config_TitleLineOptions, config_ProcessActionHelpInfoOptions);
+    //}
 
     /// <summary>
     /// Format that displays out the Help Info using attribute Format.
@@ -62,12 +90,31 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     /// <summary>
     /// Use this Delegate to override the Help Action Options
     /// </summary>
-    protected Action<ProcessActionHelpInfoOptions>? config_ProcessActionHelpInfoOptions { get; set; } = null;
+    protected virtual void config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options) {
+        
+
+        if(_CxInfo != null)
+        {
+            options.ProcessDescription = _CxInfo.description;            
+        }
+    }
 
     /// <summary>
     /// Use this Delegate to override the Title Display
     /// </summary>
-    protected Action<TitleLineOptions>? config_TitleLineOptions { get; set; } = null;
+    protected virtual void config_TitleLineOptions(TitleLineOptions options) {
+        if(_CxInfo != null)
+        {
+            options.Title = _CxInfo.processCallName.CaseNameDisplay();            
+            options.Append_CallingInfo(
+                _CxCommandService.Process, 
+                _CxCommandService.Command.hasCharacters() ? $"[Invalid-Command]--> {_CxCommandService.Command}" : "", 
+                _CxCommandService._Args.Select(s => $"{s.Key} {s.Value}").ToArray(),
+                _CxInfo.registerType == CxRegisterTypes.Preview,
+                _CxCommandService.Command.hasCharacters() && _CxCommandInfo != null && _CxCommandInfo.registerType == CxRegisterTypes.Preview
+                );
+        }
+    }
 
     /*
      
@@ -107,6 +154,8 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
      
      */
 
+    CxLogService? internal_log => WriteOutput_Service as CxLogService;
+
     /// <summary>
     /// The Action that is ran for the Process
     /// </summary>
@@ -114,6 +163,11 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     public virtual Task ProcessAction(CancellationToken cancellationToken)
     {
         cancellationToken.Register(HandleCancellation);
+
+        //WriteOutput_Service.append_Something(_CxCommandService);
+        //internal_log?._Title_Options.Append_CallingInfo(_CxCommandService.Process, _CxCommandService.Command, _CxCommandService._Args.Select(s => $"{s.Key} {s.Value}").ToArray());
+
+
 
         WriteOutput_Service.write_Lines();
 
@@ -128,16 +182,18 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
         
        return actingTask;
 
+        
+
         //WriteLine($"Window-Width: {Console.WindowWidth}");
         //WriteLine($"IsWindows: {OperatingSystem.IsWindows()}");
-        
+
 
         //WriteLine($"Window-Width: {Console.WindowWidth}");
         //WriteLine($"Largest-Window-Width: {Console.LargestWindowWidth}");
         //WriteLine($"");
 
         //Internal process
-       
+
 
         //return Task.CompletedTask;
     }
@@ -155,6 +211,7 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
         //Will write out the info 
         //OutputDisplay.write_ProcessActionHelpInfo(, config_ProcessActionHelpInfoOptions, config_TitleLineOptions);
 
+        
         WriteOutput_Service.write_ProcessActionHelpInfo(HelpInfoFormat());
 
         return Task.CompletedTask;

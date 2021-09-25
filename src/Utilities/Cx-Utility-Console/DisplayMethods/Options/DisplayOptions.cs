@@ -1,4 +1,6 @@
-﻿namespace CxUtility.Cx_Console.DisplayMethods;
+﻿using System.Text;
+
+namespace CxUtility.Cx_Console.DisplayMethods;
 
 public record TitleLineOptions
 {
@@ -30,6 +32,42 @@ public record TitleLineOptions
         var telct = ExtraLines.Length > 0 ? ExtraLines.Max(d => d.Length) : 0;
         BorderSize = BorderSize > tlct ? BorderSize : tlct;
         BorderSize = BorderSize > telct ? BorderSize : telct;
+    }
+
+    public TitleLineOptions Append_CallingInfo(string process, string command, string[] args, bool isPreview = false, bool isPreviewCommand = false)
+    {
+        StringBuilder sb = new StringBuilder();
+        if (process.hasCharacters())
+        {
+            List<string> lst = ExtraLines.ToList();
+            lst.Add($"---> {(isPreview ? "[Preview >> Process]" : "Process")}: {process}");
+
+            if (command.hasCharacters())
+            {
+                lst.Add($"---> {(isPreviewCommand ? "[Preview >> Command]" : "Command")}: {command}");
+
+                if (args?.Length > 0)
+                    lst.Add($"---> Args: {string.Join(" ", args)}");
+            }
+
+            ExtraLines = lst.ToArray();
+        }
+
+        ExtraLines = ExtraLines.Append(sb.ToString()).ToArray();
+
+        return this;
+    }
+
+    public TitleLineOptions Append_ExtraLines(params string[] extraLines)
+    {
+        if (extraLines?.Length > 0)
+        {
+            List<string> lst = ExtraLines.ToList();
+            lst.AddRange(extraLines);
+            ExtraLines = lst.ToArray();
+        }
+
+        return this;
     }
 
     public TitleLineOptions(string title, params string[] extraLines)

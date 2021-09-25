@@ -10,7 +10,7 @@ internal static class BuildProcessUtility
     /// </summary>
     /// <param name="options">set options to set</param>
     /// <param name="processChanges">The the process changes</param>
-    public static void _config_ProcessActionHelpInfoOptions(this ConsoleBaseProcess me, ProcessActionHelpInfoOptions options)
+    public static void _config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options)
     {
         options.display_SystemHelperArgs = false;
         options.display_ShowExamples = false;

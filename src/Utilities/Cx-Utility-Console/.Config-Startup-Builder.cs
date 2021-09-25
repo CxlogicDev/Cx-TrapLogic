@@ -34,8 +34,8 @@ public static class CxConsoleHost
     /// This is for the Title and border lines displayed in the out put 
     /// </summary>
     /// <param name="builder">The Host Builder</param>
-    /// <param name="Title_Options">The Title Options To send across All Request</param>
-    /// <param name="Help_Options">The Help Options to send across All Request</param>
+    /// <param name="Title_Options">The Title Options To send across All Processes. Note: Any Set localy will override this</param>
+    /// <param name="Help_Options">The Help Options to send across All Processes. Note: Any Set localy will override this</param>
     public static ICxConsoleHostBuilder CxConsole_RegisterOptions(this ICxConsoleHostBuilder builder, Action<TitleLineOptions>? Title_Options, Action<ProcessActionHelpInfoOptions>? Help_Options)
     {
         if (Help_Options != null)

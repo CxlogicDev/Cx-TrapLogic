@@ -17,6 +17,8 @@ public static class ConsoleUtility
     //    ActionHelpInfo.addAction_ArgsHelpInfo(ActionArg);
 
 
+    
+
     internal static CxConsoleInfoAttribute? getInfoAttribute(this ConsoleBaseProcess process) => process
         .GetType()
         .GetCustomAttributes(typeof(CxConsoleInfoAttribute), false)

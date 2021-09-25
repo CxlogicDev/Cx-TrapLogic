@@ -55,6 +55,23 @@ public static partial class CxExtensions //_System
     /// <returns></returns>
     public static obj? FromJson<obj>(this string json, JsonSerializerOptions? Options = default) where obj : class =>
         JsonSerializer.Deserialize<obj>(json, Options ?? new JsonSerializerOptions { });
+
+    /// <summary>
+    /// Take a Pascal or Camal Case String to a Space seperated display. Ex: (accountId | AccountId) = Account Id
+    /// </summary>
+    /// <param name="Name">The Display String to use</param>
+    /// <param name="SetFirstCharUpper">Tells the dispaly the starting char should always be Uppercase</param>
+    public static string CaseNameDisplay(this string Name, bool SetFirstCharUpper = true)
+    {
+        if (Name == null)
+            return string.Empty;
+
+        List<char> clst = new List<char>();
+
+        Name.ToList().ForEach(c => { if (clst.Count == 0) clst.Add(SetFirstCharUpper ? char.ToUpper(c) : c); else if (char.IsUpper(c)) clst.AddRange($" {c}"); else clst.Add(c); });
+
+        return new string(clst.ToArray());
+    }
 }
 
 
