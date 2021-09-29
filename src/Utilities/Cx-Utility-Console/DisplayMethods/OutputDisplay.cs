@@ -18,6 +18,10 @@ public interface ICxLogService
     /// </summary>
     void write_Table();
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="helpInfo"></param>
     void write_ProcessActionHelpInfo(ProcessHelpInfo helpInfo);
 }
 

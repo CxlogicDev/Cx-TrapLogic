@@ -3,12 +3,44 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 namespace CxUtility.Cx_Console;
 
-public interface ICxConsoleHostBuilder { }
+public interface ICxConsoleHostBuilder {
 
-internal sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder
+
+}
+
+
+public interface ICxCHB_ConfigurationBuilder
+{
+    ICxCHB_ConfigureServices ConfigBuilder(Action<IConfigurationBuilder> builder);
+}
+
+public interface ICxCHB_ConfigureServices
+{
+    ICxCHB_Register ConfigureServices(Action<IServiceCollection> AddtionalServices);
+}
+
+
+public interface ICxCHB_Register
+{
+
+    ICxCHB_Register RegisterAssembly(Assembly assembly);
+
+    ICxCHB_Register RegisterAssemblyType(params Type[] AssemplyTypes);
+
+
+}
+
+
+
+public sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder, ICxCHB_ConfigurationBuilder, ICxCHB_ConfigureServices, ICxCHB_Register
 {
     internal IHostBuilder iHost;
     internal string[] _args { get; set; }
+
+    /// <summary>
+    /// A Dictionary for displaying registered services. 
+    /// </summary>
+    internal Dictionary<string, CxConsoleInfoAttribute> _RegisteredProcesses { get; } = new Dictionary<string, CxConsoleInfoAttribute>();
 
     internal CxConsoleHostBuilder(string[] args)
     {
@@ -30,6 +62,9 @@ internal sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder
 
     }
 
+    public static ICxCHB_ConfigurationBuilder CreateConsole_HostBuilder(string[] args) => new CxConsoleHostBuilder(args);
+    
+
     internal ICxConsoleHostBuilder ConfigureServices(Action<IServiceCollection> AddtionalServices)
     {
         iHost.ConfigureServices(AddtionalServices);
@@ -44,16 +79,12 @@ internal sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder
         return this;
     }
 
-    /// <summary>
-    /// A Dictionary for displaying registered services. 
-    /// </summary>
-    internal Dictionary<string, CxConsoleInfoAttribute> _RegisteredProcesses { get; } = new Dictionary<string, CxConsoleInfoAttribute>();
 
     //internal IEnumerable<CxConsoleInfoAttribute> RegisteredProcesses => _RegisteredProcesses.Values;
 
     internal bool hasRegistedProcesses => _RegisteredProcesses.Count > 0;
 
-    internal ICxConsoleHostBuilder RegisterAssembly(Assembly assembly)
+    internal ICxCHB_Register RegisterAssembly(Assembly assembly)
     {
         RegisterAssemblyType(
             assembly
@@ -64,7 +95,7 @@ internal sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder
         return this;
     }
 
-    internal ICxConsoleHostBuilder RegisterAssemblyType(params Type[] AssemplyTypes)
+    internal ICxCHB_Register RegisterAssemblyType(params Type[] AssemplyTypes)
     {
         if (AssemplyTypes.Length > 0)
         {
