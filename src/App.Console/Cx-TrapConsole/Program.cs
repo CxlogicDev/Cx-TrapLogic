@@ -2,6 +2,9 @@
 using Cx_TrapConsole;
 using CxUtility.Cx_Console;
 
+/// <summary>
+/// Building and starting a CxConsle hosed project
+/// </summary>
 await CxConsoleHostBuilder
     .CreateConsole_HostBuilder(args)
     .ConfigBuilder(cfgBld =>
@@ -14,22 +17,9 @@ await CxConsoleHostBuilder
 
     })
     .RegisterAssembly(typeof(BuildProcess).Assembly)
+    //.Register_TitleLineOptions(a =>
+    //{
+    //    a.Title = "Cx Trap Console";
+    //    //a.BorderDelim = '@';
+    //})
     .RunConsole();
-
-
-//Console.WriteLine("Hello, World!");
-await CxConsoleHost
-    .CxConsole_BuildHost(args)
-    .CxConsole_RegisterServices(ser =>
-    {
-        //Write any service that is needed for process in your console Services
-
-    })
-    .CxConsole_RegisterOptions(a =>
-    {
-        a.Title = "Test Title";
-        a.BorderDelim = '+';
-    }, default)
-    .CxConsole_RegisterProcessAssemblies(typeof(BuildProcess).Assembly)
-    .CxConsole_RunConsole();
-

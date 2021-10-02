@@ -55,19 +55,25 @@ public sealed record CxCommandService
 
         _args = args;
 
+
+
         if (args.Length > 0)
         {
-            Process = args[0];
-
-            if (args.Length > 1 && !args[1].StartsWith('-'))
+            if (!args[0].StartsWith("-"))
             {
-                Command = args[1];
+                Process = args[0];
 
-                _args = args.Skip(2).ToArray();
+                if (args.Length > 1 && !args[1].StartsWith('-'))
+                {
+                    Command = args[1];
 
+                    _args = args.Skip(2).ToArray();
+
+                }
+                else
+                    _args = args.Skip(1).ToArray();
             }
-            else
-                _args = args.Skip(1).ToArray();
+
 
             if (_args.Length > 0)
                 for (int i = 0; i < _args.Length; i++)

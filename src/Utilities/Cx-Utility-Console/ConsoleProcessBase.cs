@@ -22,13 +22,6 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     /// </summary>
     public ICxLogService WriteOutput_Service { get; } 
 
-    //public ConsoleBaseProcess(CxCommandService CxProcess, IConfiguration config)
-    //{
-    //    _CxCommandService = CxProcess;
-    //    _Config = config;
-    //    WriteOutput_Service = new CxLogService(_Config, null, null);
-    //}
-
     /// <summary>
     /// Set base of the process
     /// </summary>
@@ -40,15 +33,8 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     {
         _CxCommandService = CxProcess;
         _Config = config;
-        WriteOutput_Service = new CxLogService(_Config, config_TitleLineOptions, config_ProcessActionHelpInfoOptions);
+        WriteOutput_Service = new CxLogService(_Config, CxLogService.default_override_Title_Options ?? config_TitleLineOptions, CxLogService.default_override_Help_Options ?? config_ProcessActionHelpInfoOptions);
     }
-
-    //public ConsoleBaseProcess(CxCommandService CxProcess, IConfiguration config, Action<TitleLineOptions>? config_TitleLineOptions, Action<ProcessActionHelpInfoOptions>? config_ProcessActionHelpInfoOptions)
-    //{
-    //    _CxCommandService = CxProcess;
-    //    _Config = config;
-    //    WriteOutput_Service = new CxLogService(_Config, config_TitleLineOptions, config_ProcessActionHelpInfoOptions);
-    //}
 
     /// <summary>
     /// Format that displays out the Help Info using attribute Format.
@@ -57,7 +43,6 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     /// <returns>The Help Display For the Process</returns>
     protected ProcessHelpInfo HelpInfoFormat(Func<ProcessHelpInfo>? override_Default = default)
     {
-
         if (override_Default != null)
             return override_Default();
 
@@ -116,44 +101,6 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
         }
     }
 
-    /*
-     
-     protected override void config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options)
-        {
-            var opt = _Config.GetSection("ProcessActionHelpInfoOptions").Get<ProcessActionHelpInfoOptions>();
-
-
-            options.display_SystemHelperArgs = true;
-            options.display_ShowExamples = true;
-           
-            options.ProcessDescription = opt?.ProcessDescription ?? "Default Description";
-            options.ExtendInfoLines = opt?.ExtendInfoLines ?? new string[] { };           
-        }    
-
-        protected override void config_TitleLineOptions(TitleLineOptions options)
-        {
-
-            var opt = _Config.GetSection(nameof(TitleLineOptions)).Get<TitleLineOptions>();
-
-            options.isEndLine = false;
-            options.Title = opt?.Title ?? "Default Console Title";
-            options.ExtraLines = opt?.ExtraLines ?? new string[] { };
-            options.BorderSize = opt?.BorderSize ?? 150;
-            options.IndentSize = opt?.IndentSize > 0 ? opt.IndentSize : 5;
-
-            var delim = _Config.GetSection(nameof(TitleLineOptions))[nameof(TitleLineOptions.BorderDelim)];
-            if (delim?.Length == 1 && char.TryParse(delim, out char BorderDelim))
-                options.BorderDelim = BorderDelim;
-
-
-            //throw new NotImplementedException();
-        }
-     
-     
-     
-     
-     */
-
     CxLogService? internal_log => WriteOutput_Service as CxLogService;
 
     /// <summary>
@@ -167,8 +114,6 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
         //WriteOutput_Service.append_Something(_CxCommandService);
         //internal_log?._Title_Options.Append_CallingInfo(_CxCommandService.Process, _CxCommandService.Command, _CxCommandService._Args.Select(s => $"{s.Key} {s.Value}").ToArray());
 
-
-
         WriteOutput_Service.write_Lines();
 
        // WriteOutput_Service.write_Lines(
@@ -181,21 +126,6 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
             return Info();
         
        return actingTask;
-
-        
-
-        //WriteLine($"Window-Width: {Console.WindowWidth}");
-        //WriteLine($"IsWindows: {OperatingSystem.IsWindows()}");
-
-
-        //WriteLine($"Window-Width: {Console.WindowWidth}");
-        //WriteLine($"Largest-Window-Width: {Console.LargestWindowWidth}");
-        //WriteLine($"");
-
-        //Internal process
-
-
-        //return Task.CompletedTask;
     }
 
     /// <summary>

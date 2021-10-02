@@ -30,12 +30,12 @@ internal class CxLogService : ICxLogService
     /// <summary>
     /// Display title code
     /// </summary>
-    public TitleLineOptions _Title_Options { get;  }
+    TitleLineOptions _Title_Options { get;  }
 
     /// <summary>
     /// Help display 
     /// </summary>
-    public ProcessActionHelpInfoOptions _Help_Options { get; }
+    ProcessActionHelpInfoOptions _Help_Options { get; }
 
     IConfiguration _Config { get; }
 
@@ -44,13 +44,10 @@ internal class CxLogService : ICxLogService
     public CxLogService(IConfiguration Config, Action<TitleLineOptions>? Title_Options, Action<ProcessActionHelpInfoOptions>? Help_Options)
     {
         _Config = Config;
+
         _Title_Options = new TitleLineOptions(Title_Options ?? (default_override_Title_Options ?? defualt_TitleLineOptions));
+
         _Help_Options = new ProcessActionHelpInfoOptions(Help_Options ?? (default_override_Help_Options ?? default_ProcessActionHelpInfoOptions));
-
-
-
-
-
 
     }
 
