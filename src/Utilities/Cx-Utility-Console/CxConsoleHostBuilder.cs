@@ -6,6 +6,12 @@ namespace CxUtility.Cx_Console;
 public interface ICxConsoleHostBuilder {
 
 
+
+    /// <summary>
+    /// Runs the console Process
+    /// </summary>
+    Task RunConsole();
+
 }
 
 
@@ -20,18 +26,20 @@ public interface ICxCHB_ConfigureServices
 }
 
 
-public interface ICxCHB_Register
+public interface ICxCHB_Register : ICxConsoleHostBuilder
 {
 
     ICxCHB_Register RegisterAssembly(Assembly assembly);
 
+    /// <summary>
+    /// Reqister an assembly Console types. 
+    /// </summary>
+    /// <param name="AssemplyTypes">The types in the asembly</param>
     ICxCHB_Register RegisterAssemblyType(params Type[] AssemplyTypes);
 
-
+    
 }
-
-
-
+    
 public sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder, ICxCHB_ConfigurationBuilder, ICxCHB_ConfigureServices, ICxCHB_Register
 {
     internal IHostBuilder iHost;
@@ -63,15 +71,14 @@ public sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder, ICxCHB_Config
     }
 
     public static ICxCHB_ConfigurationBuilder CreateConsole_HostBuilder(string[] args) => new CxConsoleHostBuilder(args);
-    
 
-    internal ICxConsoleHostBuilder ConfigureServices(Action<IServiceCollection> AddtionalServices)
+    ICxCHB_Register ICxCHB_ConfigureServices.ConfigureServices(Action<IServiceCollection> AddtionalServices)
     {
-        iHost.ConfigureServices(AddtionalServices);
+            iHost.ConfigureServices(AddtionalServices);
         return this;
     }
 
-    internal ICxConsoleHostBuilder ConfigBuilder(Action<IConfigurationBuilder> builder)
+    ICxCHB_ConfigureServices ICxCHB_ConfigurationBuilder.ConfigBuilder(Action<IConfigurationBuilder> builder)
     {
         if (builder is not null)
             iHost.ConfigureAppConfiguration(builder);
@@ -84,9 +91,9 @@ public sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder, ICxCHB_Config
 
     internal bool hasRegistedProcesses => _RegisteredProcesses.Count > 0;
 
-    internal ICxCHB_Register RegisterAssembly(Assembly assembly)
+    ICxCHB_Register ICxCHB_Register.RegisterAssembly(Assembly assembly)
     {
-        RegisterAssemblyType(
+        ((ICxCHB_Register)this).RegisterAssemblyType(
             assembly
             .GetTypes()
             .Where(w => w.BaseType == typeof(ConsoleBaseProcess) && w.GetCustomAttribute<CxConsoleInfoAttribute>()?.registerType != CxRegisterTypes.Skip)
@@ -95,7 +102,7 @@ public sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder, ICxCHB_Config
         return this;
     }
 
-    internal ICxCHB_Register RegisterAssemblyType(params Type[] AssemplyTypes)
+    ICxCHB_Register ICxCHB_Register.RegisterAssemblyType(params Type[] AssemplyTypes)
     {
         if (AssemplyTypes.Length > 0)
         {
@@ -122,5 +129,34 @@ public sealed record CxConsoleHostBuilder : ICxConsoleHostBuilder, ICxCHB_Config
         return this;
     }
 
+    Task ICxCHB_Register.RunConsole()
+    {
+       
+        iHost.ConfigureServices(services =>
+        {
+            //Register the CxService 
+            services.AddSingleton(obj => new CxCommandService(_hostBuilder._args));
 
+            services.AddScoped<CxConsoleProcess>();
+
+            services.AddHostedService<CxProcessHostedService>();
+
+            if (_hostBuilder.hasRegistedProcesses)
+                foreach (var item in _hostBuilder._RegisteredProcesses.Values)
+                    services.AddTransient(item.processType);
+        });
+
+        using var appHost = _hostBuilder.iHost.Build();
+
+        //Run the process 
+        await appHost.StartAsync();
+
+        //Stop the process 
+        await appHost.StopAsync();
+
+        return;
+
+
+        //return default; // Task.FromResult(this);
+    } 
 }
