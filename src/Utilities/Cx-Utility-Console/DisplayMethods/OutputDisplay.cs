@@ -101,12 +101,12 @@ internal class CxLogService : ICxLogService
 
         foreach (var proAct in helpInfo.ProcessActions)
         {
-            WriteLine($"   >{(proAct.RegisterTypes == CxRegisterTypes.Preview? " [Preview]" : "")} {proAct._Action}: {proAct.Description}");
+            WriteLine($"   {(proAct.RegisterTypes == CxRegisterTypes.Preview? " [Preview]" : "")} {proAct._Action} >> {proAct.Description}");
 
             if (proAct.ActionArguments?.Length > 0)
                 foreach (var item in proAct.ActionArguments)
                 {
-                    WriteLine($"          {new string(' ', 4)}arg: {item.key} > Use: {item.description}");
+                    WriteLine($"          {new string(' ', 4)}arg: -{item.key} >>> {item.description}");
                 }
             WriteLine();
         }

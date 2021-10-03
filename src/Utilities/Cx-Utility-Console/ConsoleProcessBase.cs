@@ -75,9 +75,7 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     /// <summary>
     /// Use this Delegate to override the Help Action Options
     /// </summary>
-    protected virtual void config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options) {
-        
-
+    protected virtual void config_ProcessActionHelpInfoOptions(ProcessActionHelpInfoOptions options) {        
         if(_CxInfo != null)
         {
             options.ProcessDescription = _CxInfo.description;            
@@ -93,7 +91,7 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
             options.Title = _CxInfo.processCallName.CaseNameDisplay();            
             options.Append_CallingInfo(
                 _CxCommandService.Process, 
-                _CxCommandService.Command.hasCharacters() ? $"[Invalid-Command]--> {_CxCommandService.Command}" : "", 
+                _CxCommandService.Command.hasCharacters() ? $"[Invalid-Command] {_CxCommandService.Command}" : "", 
                 _CxCommandService._Args.Select(s => $"{s.Key} {s.Value}").ToArray(),
                 _CxInfo.registerType == CxRegisterTypes.Preview,
                 _CxCommandService.Command.hasCharacters() && _CxCommandInfo != null && _CxCommandInfo.registerType == CxRegisterTypes.Preview
@@ -141,7 +139,7 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
         //Will write out the info 
         //OutputDisplay.write_ProcessActionHelpInfo(, config_ProcessActionHelpInfoOptions, config_TitleLineOptions);
 
-        
+        //WriteOutput_Service.write_Lines(HelpInfoFormat().ToJson());
         WriteOutput_Service.write_ProcessActionHelpInfo(HelpInfoFormat());
 
         return Task.CompletedTask;

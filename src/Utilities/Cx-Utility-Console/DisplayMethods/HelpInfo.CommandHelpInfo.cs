@@ -21,7 +21,7 @@ public record CommandHelpInfo(string _Action, string Description, CxRegisterType
     /// <param name="ActionArgs"></param>
     public CommandHelpInfo addAction_ArgsHelpInfo(params CommandArgsHelpInfo[] ActionArgs)
     {
-        if ((ActionArguments ?? new CommandArgsHelpInfo[] { }).Length <= 0)
+        if (ActionArgs == null || ActionArgs.Length <= 0)
             return this;
 
         foreach (var i in ActionArgs)
