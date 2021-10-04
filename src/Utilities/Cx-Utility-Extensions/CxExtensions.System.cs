@@ -16,14 +16,13 @@ public static partial class CxExtensions //_System
     /// </summary>
     /// <param name="str">The string to test</param>
     /// <param name="allowBlankSpace">Are blank Chars allowed</param>        
-    public static bool hasCharacters(this string str, bool allowBlankSpace = false) => str?.Length > 0 ?
-        (allowBlankSpace ? true : str.Trim().Length > 0) : false;
+    public static bool hasCharacters(this string? str, bool allowBlankSpace = false) => str?.Length > 0 && (allowBlankSpace ? true : str.Trim().Length > 0);
 
     /// <summary>
     /// Test to see if the string has No Chars. Blank Spaces are Ignored. 
     /// </summary>
     /// <param name="str">The string to test for not content.</param>
-    public static bool hasNoCharacters(this string str) => !(str?.Trim().Length > 0);
+    public static bool hasNoCharacters(this string? str) => !(str?.Trim().Length > 0);
 
     /// <summary>
     /// Will produce a list of indexs of where values are stored
