@@ -147,8 +147,6 @@ internal class BuildProcess : ConsoleBaseProcess
     }
     //*/
     
-
-
     /*
     public override Task ProcessAction(CancellationToken cancellationToken)
     {
@@ -157,11 +155,6 @@ internal class BuildProcess : ConsoleBaseProcess
         return Task.CompletedTask;
     }
     //*/
-
-
-
-
-
 }
 
 public record Build_Tree
@@ -291,7 +284,6 @@ public record Build_Tree
         return tree_view.Distinct().ToArray();
     }
 }
-
 
 public record Tree_Branch
 {
