@@ -12,6 +12,7 @@ node_modules/
 .gradle/
 src/SignalR/clients/**/dist/
 modules/
+*/.ignore/
 
 # User-specific files
 

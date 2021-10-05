@@ -4,6 +4,7 @@
     <RootNamespace>CxUtility.Cx_Console</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Version>1.0.0.1</Version>
   </PropertyGroup>
   <!--<ItemGroup>
     <Compile Remove="ConsoleProcess.cs" />

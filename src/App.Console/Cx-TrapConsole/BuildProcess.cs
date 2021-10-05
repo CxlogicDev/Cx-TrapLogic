@@ -11,8 +11,6 @@ internal class BuildProcess : ConsoleBaseProcess
 {
     string ContentRootPath { get; }
 
-    
-
     public BuildProcess(CxCommandService CxProcess, IConfiguration config, Microsoft.Extensions.Hosting.IHostEnvironment env) : 
         base(CxProcess, config)     
     {
@@ -52,11 +50,20 @@ internal class BuildProcess : ConsoleBaseProcess
 
         }
 
+        start_Dir_Parts = start_Dir_Parts.Take(start_Dir_Parts.Length - ct).ToArray();
+
         var start_Dir =  //<< just 2 dir behind: Make sure you stick to the pattern when Creating new Projects
-            Path.Combine(start_Dir_Parts.Take(start_Dir_Parts.Length - ct).ToArray());
+            Path.Combine(start_Dir_Parts);
+        WriteOutput_Service.write_Lines($"Starting Path: {start_Dir}");
+
+        var Solution_Dir = Path.Combine(start_Dir_Parts[0..^1]);
+        WriteOutput_Service.write_Lines($"Solution Path: {start_Dir}");
 
         const string CxTreeName = "Cx-BuildTree.json";
-        string CxTreeRootPath = Path.Combine(start_Dir, CxTreeName);
+
+        string CxTreeRootPath = Path.Combine(Solution_Dir, CxTreeName);
+
+        WriteOutput_Service.write_Lines($"CxTreeRoot Path: {start_Dir}");
 
         Build_Tree? _tree = null;
 
@@ -70,17 +77,18 @@ internal class BuildProcess : ConsoleBaseProcess
             throw new NotImplementedException("Need to Finsih this Action"); 
         }
 
+        _tree = new Build_Tree(start_Dir);
 
 
-        WriteOutput_Service.write_Lines($"Starting Path: {start_Dir}");
-        //WriteOutput_Service.write_Lines("\n");
+        
+        ////WriteOutput_Service.write_Lines("\n");
 
-        Dir_Search(start_Dir);
+        //Dir_Search(start_Dir);
 
-        _tree = _tree ?? new Build_Tree(tree_view.Where(w => !w.EndsWith("Cx-TrapConsole.csproj", StringComparison.OrdinalIgnoreCase)));
 
         _tree.Check_Versions();
 
+        _tree.update_Publish_Order();
 
         /*
         foreach (var tree in tree_view.Where(w => !w.EndsWith("Cx-TrapConsole.csproj", StringComparison.OrdinalIgnoreCase) ))
@@ -119,7 +127,12 @@ internal class BuildProcess : ConsoleBaseProcess
         //return Task.CompletedTask;
     }
 
-    //Searches the tree for .csproj Files
+    /* !!!!!! ToDo: Add in a call that will Set a project to build in full publlish. !!!!!!
+        -- Set Project refs to package refs
+        -- Set Build order should be last or before project that use it but should never happen. 
+    */
+
+    /*/Searches the tree for .csproj Files
     List<string> tree_view { get; set; }
     void Dir_Search(string dir_to_Search)
     {
@@ -132,7 +145,7 @@ internal class BuildProcess : ConsoleBaseProcess
         foreach (var item in Directory.GetDirectories(dir_to_Search))
             Dir_Search(item);
     }
-
+    //*/
     
 
 
@@ -153,26 +166,96 @@ internal class BuildProcess : ConsoleBaseProcess
 
 public record Build_Tree
 {
+    public Dictionary<string, Tree_Branch> _Branches { get; set; } = new();
 
     public Build_Tree() { }
 
     public Build_Tree(IEnumerable<string> Branch_Paths)
     {
-        Branches.AddRange(Branch_Paths.Select(s => new Tree_Branch(s)));
+        foreach (var tb in Branch_Paths.Select(s => new Tree_Branch(s)))
+        {            
+            if(tb?.Proj_Name != null)                
+                _Branches.Add(tb.Proj_Name, tb);
+        }
     }
 
     public Build_Tree(string root_Path)
     {
+        const string exclude = "Cx-TrapConsole.csproj";
+
         if (Directory.Exists(root_Path))
-            Branches.AddRange(Dir_Search(root_Path).Select(s => new Tree_Branch(s)));
+        {
+            var Dir_Search_Results = Dir_Search(root_Path).Where(w => !w.EndsWith(exclude, StringComparison.OrdinalIgnoreCase));
+            foreach (var tb in Dir_Search_Results.Select(s => new Tree_Branch(s)))
+            {
+                if (tb?.Proj_Name != null)
+                    _Branches.Add(tb.Proj_Name, tb);
+            }
+        }
     }
 
     public string? root { get; set; }
     
-    public List<Tree_Branch> Branches { get; set; } = new List<Tree_Branch>();
-
-    public void Check_Publish_Order()
+    public void update_Publish_Order()
     {
+        throw new NotImplementedException("Not Enough projects to fish this method");
+
+        Dictionary<int, Tree_Branch> Branch_Order = new();
+
+        //Pull All Trees that have no References
+        var No_Refs = _Branches
+            .Where(w => w.Value.References.Count == 0);
+
+        int ct = 0, max_No_Refs = 0;
+        foreach (var obj in No_Refs)
+        {
+            _Branches[obj.Key].Publish_Order = 1;
+            Branch_Order[++ct] = obj.Value;
+        }
+
+        max_No_Refs = Branch_Order.Select(s => s.Key).Max();
+
+        //Pull All that have only PackageReferences
+        var Package_Ref = _Branches
+            .Where(w => w.Value.References.Count > 0 && w.Value.References.All(a => a.referenceType == Tree_Branch_Referenece.PackageReferenceName));
+
+        List<Tree_Branch> order = new List<Tree_Branch>();
+
+        foreach (var obj in Package_Ref)
+        {
+            if(order.Count == 0)
+            {
+                order.Add(obj.Value);
+                continue;
+            }
+
+            //all Ref for the current Obj
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+            string[]? allRefName = obj.Value.References.Select(s => s.name).ToArray();
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+
+            //Get the max index to figure out where to upload
+            var idx = order.Where(o => allRefName.Contains(o.Proj_Name)).Select((v, i) => i).Max();
+
+            order.Insert(idx + 1, obj.Value);
+
+
+        }
+
+
+        //List<(int order, string? Proj_Name, string? Proj_Version, string package)> Packages = new();
+
+        //Add NoRef Projects
+        //Packages.AddRange(No_Refs.Select(s => (s.Value.Publish_Order, s.Value.Proj_Name, s.Value.Proj_Version, $"{s.Value.Proj_Name}.{s.Value.Proj_Version}")));
+
+
+
+        //Packages.AddRange(Package_Ref.Select(s => (0, s.Value.Proj_Name, s.Value.Proj_Version, $"{s.Value.Proj_Name}.{s.Value.Proj_Version}")));
+
+
+
+        //Ignore any that have Project References
+
         throw new NotFiniteNumberException();
     }
 
@@ -181,12 +264,11 @@ public record Build_Tree
     /// </summary>    
     public void Check_Versions()
     {
-        foreach (var item in Branches)
-            if (item.Proj_Version.hasNoCharacters())
-                item.IncreseVersion();
+        foreach (var key in _Branches.Keys)
+            if (_Branches[key].Proj_Version.hasNoCharacters())
+                _Branches[key].IncreseVersion();
     }
 
-    
     /// <summary>
     /// Seraches for Braches from the root.
     /// </summary>
@@ -194,17 +276,16 @@ public record Build_Tree
     /// <returns></returns>
     string[] Dir_Search(string root_dir_to_Search)
     {
-        IList<string> tree_view = Recursion(root_dir_to_Search, new List<string>());
+        IList<string> tree_view = new List<string>();
+        Recursion(root_dir_to_Search);
 
-        IList<string> Recursion(string dir_to_Search, List<string> tree_view)
+        void Recursion(string dir_to_Search)
         {
             foreach (var item in Directory.GetFiles(dir_to_Search, "*.csproj"))
                 tree_view.Add(item);
 
             foreach (var item in Directory.GetDirectories(dir_to_Search))
-                tree_view.AddRange(Recursion(item, tree_view));
-
-            return tree_view;
+                Recursion(item);            
         }
 
         return tree_view.Distinct().ToArray();
@@ -252,7 +333,7 @@ public record Tree_Branch
 
         Proj_Version = PropertyGroup["Version"]?.InnerText ?? string.Empty;
         Proj_Framework = PropertyGroup["TargetFramework"]?.InnerText ?? string.Empty;
-        Proj_Name = Proj_Path.Split(Path.DirectorySeparatorChar).Last().Split('.')[0];
+        Proj_Name = Proj_Path?.Split(Path.DirectorySeparatorChar).Last().Split('.')[0] ?? throw new ArgumentNullException(nameof(Proj_Path));
         Proj_Namespace = PropertyGroup["RootNamespace"]?.InnerText ?? string.Empty;
     }
 
@@ -260,16 +341,19 @@ public record Tree_Branch
   
     void Load_References(System.Xml.XmlDocument doc)
     {
-        foreach(var node in doc.GetElementsByTagName("ItemGroup"))
+        foreach(System.Xml.XmlElement node in doc.GetElementsByTagName("ItemGroup"))
         {
-            
-            //var t = node.
+            var PackageRefs = node.SelectNodes(Tree_Branch_Referenece.PackageReferenceName);
+            if(PackageRefs?.Count > 0)
+                foreach (System.Xml.XmlElement refNode in PackageRefs)
+                    References.Add(Tree_Branch_Referenece.PackageReference(refNode.GetAttribute("Include"), refNode.GetAttribute("Version")));
 
-
+            var ProjectRefs = node.SelectNodes(Tree_Branch_Referenece.ProjectReferenceName);
+            if (ProjectRefs?.Count > 0)
+                foreach (System.Xml.XmlElement projNode in ProjectRefs)
+                    References.Add(Tree_Branch_Referenece.ProjectReference(projNode.GetAttribute("Include")));
         }
     }
-
-    
 
     internal void IncreseVersion()
     {
@@ -298,7 +382,7 @@ public record Tree_Branch
         }
 
         //Increase Posibly 
-        var splitVersion = (Proj_Version ?? baseVersion).Split('.');
+        var splitVersion =  (Proj_Version != null && Proj_Version.hasCharacters()? Proj_Version : baseVersion).Split('.');
         var idx = splitVersion.Select((x, i) => i).Max();
 
         splitVersion[idx] = $"{((splitVersion[idx].toInt32() ?? 0) + 1)}";
@@ -322,6 +406,14 @@ public record Tree_Branch
 
 public record Tree_Branch_Referenece
 {
+
+    public const string PackageReferenceName = nameof(PackageReference);
+    public const string ProjectReferenceName = nameof(ProjectReference);
+
+    public static Tree_Branch_Referenece PackageReference(string Name, string Version) => new() { name = Name, version = Version, referenceType = PackageReferenceName };
+
+    public static Tree_Branch_Referenece ProjectReference(string Name) => new() { name = Name, referenceType = ProjectReferenceName };
+
     //public enum ReferenceType { Dll, Package, Project  }
     //public ReferenceType referenceType { get; set; }
     public string? referenceType { get; set; }
