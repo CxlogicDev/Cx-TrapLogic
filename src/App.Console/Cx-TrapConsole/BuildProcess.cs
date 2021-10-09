@@ -32,10 +32,6 @@ internal class BuildProcess : ConsoleBaseProcess
     [CxConsoleActionArg("v", CxConsoleActionArgAttribute.arg_Types.Switch, "Shows the previous tree or build the tree and shows it to the screen.", true, false)]
     public async Task DiscoverSolutionTree()
     {
-
-
-        WriteOutput_Service.write_Lines("Test the new Code output in the build process");
-
         //Need to start at a definde spot and do a search through directory;
         
         var start_Dir_Parts = ContentRootPath.Split(Path.DirectorySeparatorChar);
@@ -49,47 +45,62 @@ internal class BuildProcess : ConsoleBaseProcess
                 ct += start_Dir_Parts.Length - i;
 
         }
-
-        start_Dir_Parts = start_Dir_Parts.Take(start_Dir_Parts.Length - ct).ToArray();
+                
+        start_Dir_Parts = start_Dir_Parts[0..(start_Dir_Parts.Length - ct)];
 
         var start_Dir =  //<< just 2 dir behind: Make sure you stick to the pattern when Creating new Projects
             Path.Combine(start_Dir_Parts);
-        WriteOutput_Service.write_Lines($"Starting Path: {start_Dir}");
 
         var Solution_Dir = Path.Combine(start_Dir_Parts[0..^1]);
-        WriteOutput_Service.write_Lines($"Solution Path: {start_Dir}");
 
         const string CxTreeName = "Cx-BuildTree.json";
 
         string CxTreeRootPath = Path.Combine(Solution_Dir, CxTreeName);
 
-        WriteOutput_Service.write_Lines($"CxTreeRoot Path: {start_Dir}");
+        WriteOutput_Service.write_Lines(3, $"Solution Path: {Solution_Dir}");
+        WriteOutput_Service.write_Lines(3, $"Starting Path: {start_Dir}");
+        WriteOutput_Service.write_Lines(3, $"CxTreeRoot Path: {CxTreeRootPath}");
 
         Build_Tree? _tree = null;
 
         if (File.Exists(CxTreeRootPath))
         {
+            throw new NotImplementedException("I now have A json tree file I Need to Finsih this Action"); 
             //using var file_Stream = File.Open(CxTreeRootPath, FileMode.Open);
             //System.Text.Json.JsonDocument jDoc = System.Text.Json.JsonDocument.Parse(file_Stream);
-            string jsonString = await File.ReadAllTextAsync(CxTreeRootPath);
-            _tree = jsonString.FromJson<Build_Tree>();
+            //string jsonString = await File.ReadAllTextAsync(CxTreeRootPath);
+            //_tree = jsonString.FromJson<Build_Tree>();
 
-            throw new NotImplementedException("Need to Finsih this Action"); 
         }
 
         _tree = new Build_Tree(start_Dir);
 
-
-        
-        ////WriteOutput_Service.write_Lines("\n");
-
-        //Dir_Search(start_Dir);
-
-
         _tree.Check_Versions();
+
+        WriteOutput_Service.write_Lines();
 
         _tree.update_Publish_Order();
 
+        var maxValues = _tree.maxProj_FieldLengths();
+
+        foreach (var item in _tree.ordered_Branchs)
+        {
+            WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Project", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}");
+            if (item.References.Count > 0)
+                foreach (var _ref in item.References)
+                {
+                    throw new NotImplementedException("I now have references to display check and compleate this for display ref");
+                    //WriteOutput_Service.write_Lines("Project".Length + 5, $">> Reference: {_ref.name}; Version: {_ref.version}");
+                }
+
+            WriteOutput_Service.write_Lines();
+        }
+
+        string displayVal(string Label, string? value, int maxLength) =>
+            //{label}: {value}{space(maxLength - value.Length)}
+            $"{Label}: {value??""}{new string(' ', maxLength - (value??"").Length)}";
+
+        //display
         /*
         foreach (var tree in tree_view.Where(w => !w.EndsWith("Cx-TrapConsole.csproj", StringComparison.OrdinalIgnoreCase) ))
         {
@@ -159,19 +170,14 @@ internal class BuildProcess : ConsoleBaseProcess
 
 public record Build_Tree
 {
-    public Dictionary<string, Tree_Branch> _Branches { get; set; } = new();
+    Dictionary<string, Tree_Branch> _Branches { get; set; } = new();
 
     public Build_Tree() { }
 
-    public Build_Tree(IEnumerable<string> Branch_Paths)
-    {
-        foreach (var tb in Branch_Paths.Select(s => new Tree_Branch(s)))
-        {            
-            if(tb?.Proj_Name != null)                
-                _Branches.Add(tb.Proj_Name, tb);
-        }
-    }
-
+    /// <summary>
+    /// Builds the tree using the Root Path
+    /// </summary>
+    /// <param name="root_Path"></param>
     public Build_Tree(string root_Path)
     {
         const string exclude = "Cx-TrapConsole.csproj";
@@ -187,12 +193,26 @@ public record Build_Tree
         }
     }
 
-    public string? root { get; set; }
-    
-    public void update_Publish_Order()
-    {
-        throw new NotImplementedException("Not Enough projects to fish this method");
+    //void temp(IEnumerable<string> Branch_Paths)
+    //{
+    //    foreach (var tb in Branch_Paths.Select(s => new Tree_Branch(s)))
+    //    {
+    //        if (tb?.Proj_Name != null)
+    //            _Branches.Add(tb.Proj_Name, tb);
+    //    }
+    //}
 
+    /// <summary>
+    /// A cached values of update_Publish_Order(); Note: Must Call update_Publish_Order() first
+    /// </summary>
+    public Tree_Branch[] ordered_Branchs { get; private set;  } = new Tree_Branch[0];
+
+    /// <summary>
+    /// Attches the build order for any active projects
+    /// </summary>
+    /// <exception cref="NotImplementedException"></exception>
+    public Tree_Branch[] update_Publish_Order()
+    {        
         Dictionary<int, Tree_Branch> Branch_Order = new();
 
         //Pull All Trees that have no References
@@ -231,25 +251,14 @@ public record Build_Tree
             var idx = order.Where(o => allRefName.Contains(o.Proj_Name)).Select((v, i) => i).Max();
 
             order.Insert(idx + 1, obj.Value);
-
-
+            throw new NotImplementedException("I now have Project that have reference. I can now finish this method.");
         }
-
-
-        //List<(int order, string? Proj_Name, string? Proj_Version, string package)> Packages = new();
-
-        //Add NoRef Projects
-        //Packages.AddRange(No_Refs.Select(s => (s.Value.Publish_Order, s.Value.Proj_Name, s.Value.Proj_Version, $"{s.Value.Proj_Name}.{s.Value.Proj_Version}")));
-
-
-
-        //Packages.AddRange(Package_Ref.Select(s => (0, s.Value.Proj_Name, s.Value.Proj_Version, $"{s.Value.Proj_Name}.{s.Value.Proj_Version}")));
-
-
 
         //Ignore any that have Project References
 
-        throw new NotFiniteNumberException();
+        ordered_Branchs =  Branch_Order.OrderBy(o => o.Key).Select(s => s.Value).ToArray();
+
+        return ordered_Branchs;
     }
 
     /// <summary>
@@ -282,6 +291,27 @@ public record Build_Tree
         }
 
         return tree_view.Distinct().ToArray();
+    }
+
+    /// <summary>
+    /// Gets the Max Lengths values from the Tree_Branch values. maxProjValueLengths() called if order not set
+    /// </summary>
+    public (bool isValid, int max_name, int max_Namespace, int max_Version, int max_Path, int max_Framework) maxProj_FieldLengths()
+    {
+        (bool isValid, int max_name, int max_Namespace, int max_Version, int max_Path, int max_Framework) result = 
+            (false, 0, 0, 0, 0, 0);
+
+        if (ordered_Branchs.Length > 0 || (!(ordered_Branchs.Length > 0) && update_Publish_Order().Length > 0))
+        {
+            result.max_name = ordered_Branchs.Select(s => (s.Proj_Name?.Length ?? 0)).Max();
+            result.max_Namespace = ordered_Branchs.Select(s => (s.Proj_Namespace?.Length ?? 0)).Max();
+            result.max_Version = ordered_Branchs.Select(s => (s.Proj_Version?.Length ?? 0)).Max();
+            result.max_Path = ordered_Branchs.Select(s => (s.Proj_Path?.Length ?? 0)).Max();
+            result.max_Framework = ordered_Branchs.Select(s => (s.Proj_Framework?.Length ?? 0)).Max();
+            result.isValid = true;
+        }
+
+        return result;
     }
 }
 
@@ -412,4 +442,5 @@ public record Tree_Branch_Referenece
     public string? name { get; set; }
     public string? version { get; set; }
 }
+
 

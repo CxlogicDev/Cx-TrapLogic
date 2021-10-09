@@ -14,6 +14,19 @@ public interface ICxLogService
     void write_Lines(params string[] lines);
 
     /// <summary>
+    /// Adds prefix space amount to lines
+    /// </summary>
+    /// <param name="indentSpace"></param>
+    /// <param name="lines"></param>
+    void write_Lines(int indentSpace, params string[] lines) => write_Lines(lines.Select(s => $"{space(indentSpace)}{s}").ToArray());
+
+    /// <summary>
+    /// space values
+    /// </summary>
+    /// <param name="blankSpace">Amount of space</param>
+    string space(int blankSpace) => new string(' ', blankSpace < 0? 0 : (blankSpace > 10? 10 : blankSpace));
+
+    /// <summary>
     /// 
     /// </summary>
     void write_Table();
