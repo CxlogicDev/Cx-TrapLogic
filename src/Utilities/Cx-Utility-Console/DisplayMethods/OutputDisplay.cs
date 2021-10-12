@@ -77,6 +77,7 @@ internal class CxLogService : ICxLogService
             WriteLine(item);
     }
 
+
     void ICxLogService.write_Table()
     {
         write_TitleLine();
@@ -141,8 +142,6 @@ internal class CxLogService : ICxLogService
 
         //write_TitleLine(TitleOptions with { isEndLine = true });
     }
-
-
 
     static string indent(int size, char delim = ' ') => new string(' ', size);
 

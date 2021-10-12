@@ -3,19 +3,20 @@ using CxUtility.Cx_Console.DisplayMethods;
 using Microsoft.Extensions.Configuration;
 
 using System.Linq;
+using System.Text;
 
 namespace Cx_TrapConsole;
 
-[CxConsoleInfo("build", typeof(BuildProcess), CxRegisterTypes.Preview, "Helps Build the Soultion. Also used as a Training process to understand Console Pipelining ")]
+[CxConsoleInfo("project", typeof(BuildProcess), CxRegisterTypes.Preview, "Helps Build the Soultion. Also used as a Training process to understand Console Pipelining ")]
 internal class BuildProcess : ConsoleBaseProcess
 {
-    string ContentRootPath { get; }
+    Content_Path_Structure _contentRoot { get; }
+    string ContentRootPath => _contentRoot.contentRootPath;
 
     public BuildProcess(CxCommandService CxProcess, IConfiguration config, Microsoft.Extensions.Hosting.IHostEnvironment env) : 
         base(CxProcess, config)     
-    {
-        ContentRootPath = env.ContentRootPath;
-        
+    {   
+        _contentRoot = new Content_Path_Structure(env.ContentRootPath);
         ////Override the default 
         //this.config_ProcessActionHelpInfoOptions = this._config_ProcessActionHelpInfoOptions;
 
@@ -28,136 +29,208 @@ internal class BuildProcess : ConsoleBaseProcess
 
     }
 
+    //protected override bool isCanceled { get { return base.isCanceled; } set { base.isCanceled = value; } }
+
     [CxConsoleAction("tree", "Will discover the build tree and output it to the base directory or the solution", true, CxRegisterTypes.Preview)]
     [CxConsoleActionArg("v", CxConsoleActionArgAttribute.arg_Types.Switch, "Shows the previous tree or build the tree and shows it to the screen.", true, false)]
-    public async Task DiscoverSolutionTree()
+    [CxConsoleActionArg("r", CxConsoleActionArgAttribute.arg_Types.Switch, "Will delete the cached .json tree file. nagates", true, false)]
+    public Task DiscoverSolutionTree(CancellationToken cancellationToken)
     {
-        //Need to start at a definde spot and do a search through directory;
-        
-        var start_Dir_Parts = ContentRootPath.Split(Path.DirectorySeparatorChar);
+        /*
+          ToDo: handle the cancellationToken through out the method        
+        */
 
-        int ct = 2;
-        if (start_Dir_Parts.Contains("bin"))
-        {
-            var (x, i) = start_Dir_Parts.Select((x, i) => (x, i)).FirstOrDefault(f => f.x.ToLower().Equals("bin"));
-            //start_Dir_Parts.Contains("bin") ? 3 :
-            if (x != null)
-                ct += start_Dir_Parts.Length - i;
+        WriteOutput_Service.write_Lines(3, $"Solution Path: {_contentRoot.Solution_Dir}");
 
-        }
-                
-        start_Dir_Parts = start_Dir_Parts[0..(start_Dir_Parts.Length - ct)];
-
-        var start_Dir =  //<< just 2 dir behind: Make sure you stick to the pattern when Creating new Projects
-            Path.Combine(start_Dir_Parts);
-
-        var Solution_Dir = Path.Combine(start_Dir_Parts[0..^1]);
-
-        const string CxTreeName = "Cx-BuildTree.json";
-
-        string CxTreeRootPath = Path.Combine(Solution_Dir, CxTreeName);
-
-        WriteOutput_Service.write_Lines(3, $"Solution Path: {Solution_Dir}");
-        WriteOutput_Service.write_Lines(3, $"Starting Path: {start_Dir}");
-        WriteOutput_Service.write_Lines(3, $"CxTreeRoot Path: {CxTreeRootPath}");
+        WriteOutput_Service.write_Lines(3, $"Source Path: {_contentRoot.start_Dir}");
 
         Build_Tree? _tree = null;
 
-        if (File.Exists(CxTreeRootPath))
+        if(_CxCommandService.getCommandArg("-r", out var _) && File.Exists(_contentRoot.CxTreeRootPath))
+            File.Delete(_contentRoot.CxTreeRootPath);//Delete the caches tree
+        else if (File.Exists(_contentRoot.CxTreeRootPath) && _CxCommandService.getCommandArg("-v", out string? i_val))
         {
-            throw new NotImplementedException("I now have A json tree file I Need to Finsih this Action"); 
-            //using var file_Stream = File.Open(CxTreeRootPath, FileMode.Open);
-            //System.Text.Json.JsonDocument jDoc = System.Text.Json.JsonDocument.Parse(file_Stream);
-            //string jsonString = await File.ReadAllTextAsync(CxTreeRootPath);
-            //_tree = jsonString.FromJson<Build_Tree>();
+            /***/
+            StringBuilder CxTree_data = new StringBuilder();
+            using StreamReader sr = File.OpenText(_contentRoot.CxTreeRootPath);
+            while (!sr.EndOfStream)
+                CxTree_data.Append(sr.ReadLine());
 
+            var fullString = CxTree_data.ToString();
+
+            _tree = Build_Tree.LoadFrom_Json(CxTree_data.ToString());
+            /*  */
+            write_Output(_tree, _contentRoot.CxTreeRootPath);
+
+            return Task.CompletedTask;
         }
 
-        _tree = new Build_Tree(start_Dir);
+        _tree = new Build_Tree(_contentRoot.start_Dir);
 
         _tree.Check_Versions();
 
-        WriteOutput_Service.write_Lines();
-
         _tree.update_Publish_Order();
 
-        var maxValues = _tree.maxProj_FieldLengths();
+        string CxTree_Output = _tree.ToString();
+        File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
 
-        foreach (var item in _tree.ordered_Branchs)
+        write_Output(_tree, CxTree_Output);
+
+        void write_Output(Build_Tree? _tree, string CxTreeRootPath)
         {
-            WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Project", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}");
-            if (item.References.Count > 0)
-                foreach (var _ref in item.References)
-                {
-                    throw new NotImplementedException("I now have references to display check and compleate this for display ref");
-                    //WriteOutput_Service.write_Lines("Project".Length + 5, $">> Reference: {_ref.name}; Version: {_ref.version}");
-                }
-
             WriteOutput_Service.write_Lines();
+
+            if (_tree == null)
+                return;
+
+            var maxValues = _tree.maxProj_FieldLengths();
+
+            foreach (var item in _tree.ordered_Branchs)
+            {
+                WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Project", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}");
+                if (item.References.Count > 0)
+                    foreach (var _ref in item.References)
+                    {
+                        throw new NotImplementedException("I now have references to display check and compleate this for display ref");
+                        //WriteOutput_Service.write_Lines("Project".Length + 5, $">> Reference: {_ref.name}; Version: {_ref.version}");
+                    }
+
+                WriteOutput_Service.write_Lines();
+            }
+
+            WriteOutput_Service.write_Lines(3, $"CxTreeRoot Path: {CxTreeRootPath}; File: {(File.Exists(CxTreeRootPath) ? "" : "Does Not ")}Exists");
+
+            /* 
+            WriteOutput_Service.write_Lines(3, _tree.ordered_Branchs.ToJson(new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true,
+            }));
+            //*/
+            
         }
 
-        string displayVal(string Label, string? value, int maxLength) =>
-            //{label}: {value}{space(maxLength - value.Length)}
-            $"{Label}: {value??""}{new string(' ', maxLength - (value??"").Length)}";
-
-        //display
-        /*
-        foreach (var tree in tree_view.Where(w => !w.EndsWith("Cx-TrapConsole.csproj", StringComparison.OrdinalIgnoreCase) ))
-        {
-            WriteOutput_Service.write_Lines($"File: {tree}");
-            System.Xml.XmlDocument doc = new();
-
-            doc.Load(tree);
-
-            var ProjectNode = doc["Project"];//["PropertyGroup"];
-            if (ProjectNode == null)
-                continue;
-
-            var PropertyGroup = ProjectNode["PropertyGroup"];
-            if (PropertyGroup == null)
-                continue;
-
-            var versionNode = PropertyGroup["Version"];
-
-            bool hasVersion = versionNode != null;
-
-            versionNode = versionNode ?? doc.CreateElement("Version");
-           
-
-            //if(!hasVersion)
-            //{               
-            //    versionNode.InnerText = baseVersion;
-            //    PropertyGroup.AppendChild(versionNode);
-            //    doc.Save(tree);
-            //}
-
-            WriteOutput_Service.write_Lines(doc.OuterXml.Split('\n'));
-        }
-        //*/
-
-        //return Task.CompletedTask;
+        return Task.CompletedTask;
     }
+
+    [CxConsoleAction("build", CommandDisplayInfo.build_action_description, false, CxRegisterTypes.Preview)]
+    [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_p__Publish_Description, false, false )]
+    [CxConsoleActionArg("pa", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_pa__Publish_Description, false, false)]
+    [CxConsoleActionArg("report", CxConsoleActionArgAttribute.arg_Types.Value, CommandDisplayInfo.build_arg_report__Publish_Description, false, false)]
+    public Task BuildSolutionTree()
+    {
+        /*
+         
+         */
+        Build_Tree? _tree = null;
+
+        if (!_contentRoot.hasCxTreeFile)
+        {
+            _tree = new Build_Tree(_contentRoot.start_Dir);
+
+            _tree.Check_Versions();
+
+            _tree.update_Publish_Order();
+
+            string CxTree_Output = _tree.ToString();
+            File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
+        }
+
+        if (!_contentRoot.hasCxTreeFile)
+        {
+            //Cannot run write the output and exit
+            WriteOutput_Service.write_Lines(3, "Build Tree cound not be found.");
+            return Task.CompletedTask;
+        }
+
+
+
+
+
+
+        return Task.CompletedTask;
+
+    }
+
+    
+
+    /// <summary>
+    /// Creates a display point 
+    /// </summary>
+    /// <param name="Label">The label for the display point</param>
+    /// <param name="value">The Value For the display point</param>
+    /// <param name="maxLength">The Max Lenght the display point should be</param>
+    string displayVal(string Label, string? value, int maxLength) => 
+        $"{Label}: {value ?? ""}{new string(' ', maxLength - (value ?? "").Length)}";
 
     /* !!!!!! ToDo: Add in a call that will Set a project to build in full publlish. !!!!!!
         -- Set Project refs to package refs
         -- Set Build order should be last or before project that use it but should never happen. 
     */
 
-    /*/Searches the tree for .csproj Files
-    List<string> tree_view { get; set; }
-    void Dir_Search(string dir_to_Search)
+
+    record class Content_Path_Structure
     {
-        if (tree_view == null)
-            tree_view = new();
 
-        foreach (var item in Directory.GetFiles(dir_to_Search, "*.csproj"))
-            tree_view.Add(item);
+        public string contentRootPath { get; }
 
-        foreach (var item in Directory.GetDirectories(dir_to_Search))
-            Dir_Search(item);
+        public string[] start_Dir_Parts {  get; }
+
+        public int start_Dir_Back_ct { get; }
+
+        public string start_Dir { get; }
+
+        public string Solution_Dir { get; }
+
+        public string CxTreeRootPath { get; }
+
+        public bool hasCxTreeFile => File.Exists(CxTreeRootPath);
+
+        public const string CxTreeName = ".Cx-BuildTree.json";
+
+        public Content_Path_Structure(string ContentRoot)
+        {
+
+            if (!Directory.Exists(ContentRoot))
+                throw new DirectoryNotFoundException($"The content cannot be process because the dirctory: [{ContentRoot}] does not exist!!!!");
+
+            contentRootPath = ContentRoot;
+
+            start_Dir_Parts = ContentRoot.Split(Path.DirectorySeparatorChar);
+            
+            start_Dir_Back_ct = 2;
+
+            if (start_Dir_Parts.Contains("bin"))
+            {
+                //Gets the valid start path if debugging.
+                var (x, i) = start_Dir_Parts.Select((x, i) => (x, i)).FirstOrDefault(f => f.x.ToLower().Equals("bin"));
+                //start_Dir_Parts.Contains("bin") ? 3 :
+                if (x != null)
+                    start_Dir_Back_ct += start_Dir_Parts.Length - i;
+            }
+
+            start_Dir_Parts = start_Dir_Parts[0..(start_Dir_Parts.Length - start_Dir_Back_ct)];
+
+             start_Dir =  //<< just 2 dir behind: Make sure you stick to the pattern when Creating new Projects
+                Path.Combine(start_Dir_Parts);
+
+            Solution_Dir = Path.Combine(start_Dir_Parts[0..^1]);
+
+            if (!Directory.Exists(Path.Combine(Solution_Dir, ".Cx-Trap-Build")))
+                Directory.CreateDirectory(Path.Combine(Solution_Dir, ".Cx-Trap-Build"));
+
+            CxTreeRootPath = Path.Combine(Solution_Dir, ".Cx-Trap-Build", CxTreeName);
+        }
     }
-    //*/
-    
+
+    static class CommandDisplayInfo
+    {
+        public const string build_action_description = "Will build all project in the tree.";        
+        public const string build_arg_p__Publish_Description = "Publishes the build tree where Tree_Branch.Publish is true and any project that reference the one that is being published";
+        public const string build_arg_pa__Publish_Description = "Publishes all of the projects in the build tree.";
+        public const string build_arg_report__Publish_Description = "Writes a report of the build and publish process. supply a exsiting directory location to overide default location.";
+    }
+
+
     /*
     public override Task ProcessAction(CancellationToken cancellationToken)
     {
@@ -169,8 +242,10 @@ internal class BuildProcess : ConsoleBaseProcess
 }
 
 public record Build_Tree
-{
-    Dictionary<string, Tree_Branch> _Branches { get; set; } = new();
+{    
+    internal Dictionary<string, Tree_Branch> _Branches { get; set; } = new();
+    
+    public string? rootPath { get; set; }
 
     public Build_Tree() { }
 
@@ -181,10 +256,13 @@ public record Build_Tree
     public Build_Tree(string root_Path)
     {
         const string exclude = "Cx-TrapConsole.csproj";
-
+        
         if (Directory.Exists(root_Path))
         {
+            rootPath = root_Path;
+
             var Dir_Search_Results = Dir_Search(root_Path).Where(w => !w.EndsWith(exclude, StringComparison.OrdinalIgnoreCase));
+            
             foreach (var tb in Dir_Search_Results.Select(s => new Tree_Branch(s)))
             {
                 if (tb?.Proj_Name != null)
@@ -310,6 +388,38 @@ public record Build_Tree
             result.max_Framework = ordered_Branchs.Select(s => (s.Proj_Framework?.Length ?? 0)).Max();
             result.isValid = true;
         }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Returns the json string that can be saved to file 
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        if (!(ordered_Branchs.Length > 0))
+            update_Publish_Order();
+
+        return ordered_Branchs.ToJson();
+
+    }
+    
+    public static Build_Tree LoadFrom_Json(string json_string) =>
+        LoadFrom_Branches(json_string.FromJson<Tree_Branch[]>() ?? new Tree_Branch[0]);
+
+    /// <summary>
+    /// Load a Tree by branches
+    /// </summary>
+    /// <param name="branches">The branches to load</param>
+    /// <exception cref="ArgumentNullException">if a branch is null or the name is null</exception>
+    public static Build_Tree LoadFrom_Branches(IEnumerable<Tree_Branch> branches)
+    {
+        Build_Tree result = new Build_Tree();
+
+        if (branches?.Count() > 0)
+            foreach (var tb in branches.Distinct())
+                result._Branches.Add(tb.Proj_Name ?? throw new ArgumentNullException(nameof(tb.Proj_Name)), tb);
 
         return result;
     }
@@ -442,5 +552,3 @@ public record Tree_Branch_Referenece
     public string? name { get; set; }
     public string? version { get; set; }
 }
-
-

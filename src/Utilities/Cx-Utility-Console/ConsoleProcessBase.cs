@@ -118,7 +118,8 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
        //    $"My Processing Type: {GetType().Name}", "\n\n\n\n"
        //);
 
-        var actingTask = this.get_Command(_CxCommandService)?.Invoke(this, null) as Task;
+        //Pass the cancellation Token to the method being called
+        var actingTask = this.get_Command(_CxCommandService)?.Invoke(this, new object[] { cancellationToken }) as Task;
 
         if (actingTask == null)
             return Info();
@@ -146,9 +147,10 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
     }
 
     /// <summary>
-    /// Tell The main process if a Cancelation has accured
+    /// Tell The main process if a Cancelation has accured. 
+    /// override to implement your own change logic
     /// </summary>
-    protected bool isCanceled { get; set; }
+    protected virtual bool isCanceled { get; set; }
 
     /// <summary>
     /// The under lining Cancel Method when the CancellationToken is activated.

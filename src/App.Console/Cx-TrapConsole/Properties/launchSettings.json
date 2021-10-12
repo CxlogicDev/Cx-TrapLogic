@@ -11,7 +11,7 @@
     },
     "Cx-TrapConsole-BuildProcess": {
       "commandName": "Project",
-      "commandLineArgs": "build tree"
+      "commandLineArgs": "project build"
     }
   }
 }
