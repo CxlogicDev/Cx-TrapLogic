@@ -21,7 +21,7 @@ public sealed class CxConsoleActionAttribute : System.Attribute
     /// <summary>
     /// Tells the Console Process if the Action is active and can be called 
     /// </summary>
-    internal bool isActive { get; }
+    //internal bool isActive { get; }
 
     /// <summary>
     /// Tells the Console process what the Registed type of the action is. 

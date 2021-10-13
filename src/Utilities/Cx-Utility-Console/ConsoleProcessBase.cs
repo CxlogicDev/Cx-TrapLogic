@@ -114,11 +114,12 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
 
         WriteOutput_Service.write_Lines();
 
-       // WriteOutput_Service.write_Lines(
-       //    $"My Processing Type: {GetType().Name}", "\n\n\n\n"
-       //);
+        // WriteOutput_Service.write_Lines(
+        //    $"My Processing Type: {GetType().Name}", "\n\n\n\n"
+        //);
 
         //Pass the cancellation Token to the method being called
+
         var actingTask = this.get_Command(_CxCommandService)?.Invoke(this, new object[] { cancellationToken }) as Task;
 
         if (actingTask == null)

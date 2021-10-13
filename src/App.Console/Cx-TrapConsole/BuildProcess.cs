@@ -1,7 +1,7 @@
 ﻿using CxUtility.Cx_Console;
 using CxUtility.Cx_Console.DisplayMethods;
 using Microsoft.Extensions.Configuration;
-
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -11,7 +11,7 @@ namespace Cx_TrapConsole;
 internal class BuildProcess : ConsoleBaseProcess
 {
     Content_Path_Structure _contentRoot { get; }
-    string ContentRootPath => _contentRoot.contentRootPath;
+    
 
     public BuildProcess(CxCommandService CxProcess, IConfiguration config, Microsoft.Extensions.Hosting.IHostEnvironment env) : 
         base(CxProcess, config)     
@@ -31,7 +31,7 @@ internal class BuildProcess : ConsoleBaseProcess
 
     //protected override bool isCanceled { get { return base.isCanceled; } set { base.isCanceled = value; } }
 
-    [CxConsoleAction("tree", "Will discover the build tree and output it to the base directory or the solution", true, CxRegisterTypes.Preview)]
+    [CxConsoleAction("tree", "Will discover the build tree and output it to the base directory or the solution", true, CxRegisterTypes.Register)]
     [CxConsoleActionArg("v", CxConsoleActionArgAttribute.arg_Types.Switch, "Shows the previous tree or build the tree and shows it to the screen.", true, false)]
     [CxConsoleActionArg("r", CxConsoleActionArgAttribute.arg_Types.Switch, "Will delete the cached .json tree file. nagates", true, false)]
     public Task DiscoverSolutionTree(CancellationToken cancellationToken)
@@ -113,41 +113,118 @@ internal class BuildProcess : ConsoleBaseProcess
     }
 
     [CxConsoleAction("build", CommandDisplayInfo.build_action_description, false, CxRegisterTypes.Preview)]
-    [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_p__Publish_Description, false, false )]
+    [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_p__Publish_Description, true, false )]
     [CxConsoleActionArg("pa", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_pa__Publish_Description, false, false)]
-    [CxConsoleActionArg("report", CxConsoleActionArgAttribute.arg_Types.Value, CommandDisplayInfo.build_arg_report__Publish_Description, false, false)]
-    public Task BuildSolutionTree()
+    //[CxConsoleActionArg("report", CxConsoleActionArgAttribute.arg_Types.Value, CommandDisplayInfo.build_arg_report__Publish_Description, false, false)]
+    public async Task BuildSolutionTree(CancellationToken cancellationToken)
     {
         /*
          
          */
-        Build_Tree? _tree = null;
-
-        if (!_contentRoot.hasCxTreeFile)
-        {
-            _tree = new Build_Tree(_contentRoot.start_Dir);
-
-            _tree.Check_Versions();
-
-            _tree.update_Publish_Order();
-
-            string CxTree_Output = _tree.ToString();
-            File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
-        }
-
+        
         if (!_contentRoot.hasCxTreeFile)
         {
             //Cannot run write the output and exit
-            WriteOutput_Service.write_Lines(3, "Build Tree cound not be found.");
-            return Task.CompletedTask;
+            WriteOutput_Service.write_Lines(3, $"Build Tree file could not be found. Please Build the Tree by calling the [{_CxCommandInfo?.name ?? "--null--"} tree ] command");
+            return;
+        }
+
+        bool publish = _CxCommandService.getCommandArg("-p", out var _);
+
+        bool publish_All = _CxCommandService.getCommandArg("-pa", out var _);
+
+        Build_Tree _tree = _contentRoot.get_CurrentTree();
+
+        var maxValues = _tree.maxProj_FieldLengths();
+
+        if (publish_All || publish)
+        {
+            Dictionary<string, bool> Publis_Reference_To_Me = new();
+
+            var build_List = _tree.update_Publish_Order().Where(w => publish_All || w.Publish).ToArray();
+
+            if(build_List.Length == 0)
+            {
+                WriteOutput_Service.write_Lines(3, 
+                    "No Projects to build. ",
+                    "Set the project/s you want built to true in the tree",
+                    "or use Arg -pa to build all projects");
+                return;
+            }
+
+            foreach (var item in build_List)
+            {
+                if (item.Proj_Name == null)
+                    continue;
+                else if (publish && !item.Publish)//|| Publis_Reference_To_Me.any(a => item.ref.any(ia => a))) //Note Check to see if a higher ref project was updated 
+                    continue;
+
+                Publis_Reference_To_Me[item.Proj_Name] = true;
+
+                string nupkg_Path_Name = $"{item.Proj_Name}.{item.Proj_Version}.nupkg";
+
+                string nupkg_Path = Path.Combine(item.Proj_Directory ?? throw new NullReferenceException(), "bin", "release", nupkg_Path_Name);
+
+                string Cx_nupkg_Path = Path.Combine(_contentRoot.CxTreeNupkgPath, nupkg_Path_Name);
+
+                if(!Directory.Exists(_contentRoot.CxTreeNupkgPath))
+                    Directory.CreateDirectory(_contentRoot.CxTreeNupkgPath);
+
+                if (File.Exists(nupkg_Path))
+                {
+                    WriteOutput_Service.write_Lines(3, $"Deleting {nupkg_Path}");
+                }
+
+                //Quick Write
+                WriteOutput_Service.write_Lines(3, $"Packing {displayVal("Project", item.Proj_Name, maxValues.max_name)} >> {nupkg_Path}");
+
+                // Use ProcessStartInfo class
+                ProcessStartInfo startInfo = new();
+                //startInfo.CreateNoWindow = true;
+                startInfo.WorkingDirectory = item.Proj_Directory;
+                startInfo.UseShellExecute = false;
+                startInfo.FileName = "dotnet.exe";
+                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                startInfo.Arguments = "pack --configuration release ";
+
+                try
+                {
+                    // Start the process with the info we specified.
+                    // Call WaitForExit and then the using statement will close.
+                    using Process? exeProcess = Process.Start(startInfo);
+
+                    if (exeProcess != null)
+                        await exeProcess.WaitForExitAsync(cancellationToken);
+
+                    if (!File.Exists(nupkg_Path))
+                        throw new FileNotFoundException($"{nupkg_Path} could not be found. ");
+                                        
+                    WriteOutput_Service.write_Lines(3, $"Moving {nupkg_Path} >> {(File.Exists(Cx_nupkg_Path) ? "[Overwriting] " : "")}{Cx_nupkg_Path}");
+                    File.Move(nupkg_Path, Cx_nupkg_Path, true);
+
+                    //
+
+                }
+                catch (Exception ex)
+                {
+                    WriteOutput_Service.write_Lines(2, ex.ToString());
+                    // Log error.
+                    return;
+                }
+            }
+
+
+            /*
+                Need to run through the list of processed and update the version numbers.
+
+                delete the exsting tree.
+
+                
+            */
         }
 
 
-
-
-
-
-        return Task.CompletedTask;
+        return;
 
     }
 
@@ -167,25 +244,42 @@ internal class BuildProcess : ConsoleBaseProcess
         -- Set Build order should be last or before project that use it but should never happen. 
     */
 
-
+    /// <summary>
+    /// Used to build a Content Path structure for the project build command
+    /// </summary>
     record class Content_Path_Structure
     {
-
+        /// <summary>
+        /// The Project Content Root supplied
+        /// </summary>
         public string contentRootPath { get; }
 
+        /// <summary>
+        /// The start Directory Parts to build the path structure
+        /// </summary>
         public string[] start_Dir_Parts {  get; }
 
-        public int start_Dir_Back_ct { get; }
+        /// <summary>
+        /// The back count from the content root path supplied
+        /// </summary>
+        int start_Dir_Back_ct { get; }
 
+        /// <summary>
+        /// The Source Directory
+        /// </summary>
         public string start_Dir { get; }
 
+        /// <summary>
+        /// The solution Directory 
+        /// </summary>
         public string Solution_Dir { get; }
 
+        /// <summary>
+        /// The Cx Tree Root Path
+        /// </summary>
         public string CxTreeRootPath { get; }
 
-        public bool hasCxTreeFile => File.Exists(CxTreeRootPath);
-
-        public const string CxTreeName = ".Cx-BuildTree.json";
+        public string CxTreeNupkgPath { get; }
 
         public Content_Path_Structure(string ContentRoot)
         {
@@ -218,10 +312,37 @@ internal class BuildProcess : ConsoleBaseProcess
             if (!Directory.Exists(Path.Combine(Solution_Dir, ".Cx-Trap-Build")))
                 Directory.CreateDirectory(Path.Combine(Solution_Dir, ".Cx-Trap-Build"));
 
-            CxTreeRootPath = Path.Combine(Solution_Dir, ".Cx-Trap-Build", CxTreeName);
+            CxTreeRootPath = Path.Combine(Solution_Dir, ".Cx-Trap-Build", ".Cx-BuildTree.json");
+
+            CxTreeNupkgPath = Path.Combine(Solution_Dir, ".Cx-Trap-packages");
+        }
+
+        /// <summary>
+        /// Test to see if the tree file exists
+        /// </summary>
+        public bool hasCxTreeFile => File.Exists(CxTreeRootPath);
+
+        /// <summary>
+        /// gets the Content Tree object
+        /// </summary>
+        public Build_Tree get_CurrentTree()
+        {
+            StringBuilder CxTree_data = new StringBuilder();
+            using StreamReader sr = File.OpenText(CxTreeRootPath);
+            while (!sr.EndOfStream)
+                CxTree_data.Append(sr.ReadLine());
+
+            var fullString = CxTree_data.ToString();
+
+            Build_Tree? _tree = Build_Tree.LoadFrom_Json(CxTree_data.ToString());
+
+            return _tree;
         }
     }
 
+    /// <summary>
+    /// A display only type action
+    /// </summary>
     static class CommandDisplayInfo
     {
         public const string build_action_description = "Will build all project in the tree.";        
@@ -438,6 +559,9 @@ public record Tree_Branch
             throw new FileNotFoundException($"The file: [{Project_Path ?? "null"}] was not found");
 
         Proj_Path = Project_Path;
+        string[] Proj_Path_Parts = Proj_Path.Split(Path.DirectorySeparatorChar);
+        Proj_Directory = Path.Combine(Proj_Path_Parts[0..^1]);
+
         System.Xml.XmlDocument doc = new();
         doc.Load(Proj_Path);
         Load_Properties(doc);
@@ -445,6 +569,8 @@ public record Tree_Branch
     }
 
     public string? Proj_Path { get; set; }
+
+    public string? Proj_Directory { get; set; }
     public string? Proj_Name { get; set; }
     public string? Proj_Namespace { get; set; }
     public string? Proj_Version {  get; set; }
