@@ -40,9 +40,9 @@ internal class BuildProcess : ConsoleBaseProcess
           ToDo: handle the cancellationToken through out the method        
         */
 
-        WriteOutput_Service.write_Lines(3, $"Solution Path: {_contentRoot.Solution_Dir}");
+        //WriteOutput_Service.write_Lines(3, $"Solution Path: {_contentRoot.Solution_Dir}");
 
-        WriteOutput_Service.write_Lines(3, $"Source Path: {_contentRoot.start_Dir}");
+        //WriteOutput_Service.write_Lines(3, $"Source Path: {_contentRoot.start_Dir}");
 
         Build_Tree? _tree = null;
 
@@ -74,7 +74,7 @@ internal class BuildProcess : ConsoleBaseProcess
         string CxTree_Output = _tree.ToString();
         File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
 
-        write_Output(_tree, CxTree_Output);
+        write_Output(_tree, _contentRoot.CxTreeRootPath);
 
         void write_Output(Build_Tree? _tree, string CxTreeRootPath)
         {
@@ -85,9 +85,11 @@ internal class BuildProcess : ConsoleBaseProcess
 
             var maxValues = _tree.maxProj_FieldLengths();
 
+            WriteOutput_Service.write_Lines(3, "Build Tree ProjectS");
+
             foreach (var item in _tree.ordered_Branchs)
             {
-                WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Project", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}");
+                WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"{item.Publish_Order}", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
                 if (item.References.Count > 0)
                     foreach (var _ref in item.References)
                     {
@@ -100,13 +102,6 @@ internal class BuildProcess : ConsoleBaseProcess
 
             WriteOutput_Service.write_Lines(3, $"CxTreeRoot Path: {CxTreeRootPath}; File: {(File.Exists(CxTreeRootPath) ? "" : "Does Not ")}Exists");
 
-            /* 
-            WriteOutput_Service.write_Lines(3, _tree.ordered_Branchs.ToJson(new System.Text.Json.JsonSerializerOptions
-            {
-                WriteIndented = true,
-            }));
-            //*/
-            
         }
 
         return Task.CompletedTask;
@@ -228,7 +223,43 @@ internal class BuildProcess : ConsoleBaseProcess
 
     }
 
-    
+    [CxConsoleAction("view", "Will show the full project tree and tell what can and cannot publish", true, CxRegisterTypes.Preview)]
+    [CxConsoleActionArg("s", CxConsoleActionArgAttribute.arg_Types.Value, "Search and return only project that have the search term in the name", false, false)]
+    public Task ListProjects(CancellationToken cancellationToken)
+    {
+        if (File.Exists(_contentRoot.CxTreeRootPath))
+        {
+            var _tree = new Build_Tree(_contentRoot.start_Dir);
+
+            _tree.Check_Versions();
+            
+            WriteOutput_Service.write_Lines();
+
+            if (_tree == null)
+                return Task.CompletedTask;
+
+            var maxValues = _tree.maxProj_FieldLengths();
+
+            WriteOutput_Service.write_Lines(3, "Build Tree ProjectS");
+
+            foreach (var item in _tree._Branches.Values)
+            {
+                if (item.References.Count > 0)
+                    WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Cannot Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
+                else
+                    WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Can Publish", item.Proj_Name, maxValues.max_name + 3)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
+
+            }
+
+            return Task.CompletedTask;
+        }
+
+
+        WriteOutput_Service.write_Lines($"The File {_contentRoot.CxTreeRootPath} fould not be found. ",
+            "Please Call [project tree] first to continue. ");
+
+        return Task.CompletedTask;
+    }
 
     /// <summary>
     /// Creates a display point 
