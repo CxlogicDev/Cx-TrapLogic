@@ -64,6 +64,10 @@ internal class BuildProcess : ConsoleBaseProcess
 
             return Task.CompletedTask;
         }
+        //else if (File.Exists(_contentRoot.CxTreeRootPath))
+        //{
+
+        //}
 
         _tree = new Build_Tree(_contentRoot.start_Dir);
 
@@ -224,11 +228,13 @@ internal class BuildProcess : ConsoleBaseProcess
     }
 
     [CxConsoleAction("view", "Will show the full project tree and tell what can and cannot publish", true, CxRegisterTypes.Preview)]
-    [CxConsoleActionArg("s", CxConsoleActionArgAttribute.arg_Types.Value, "Search and return only project that have the search term in the name", false, false)]
+    [CxConsoleActionArg("s", CxConsoleActionArgAttribute.arg_Types.Value, "Search and return only project that have the search term in the name", true, false)]
+    [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Value, "Tells the application to set the publish flag to true or false Valid values: {true, false, yes, no, set, or clear}. use with Search arg: -s. Only Publishable projects can be set", true, false)]
     public Task ListProjects(CancellationToken cancellationToken)
     {
         if (File.Exists(_contentRoot.CxTreeRootPath))
         {
+            //ToDo: Reconsider how the tree is built if a View already exists
             var _tree = new Build_Tree(_contentRoot.start_Dir);
 
             _tree.Check_Versions();
@@ -240,15 +246,100 @@ internal class BuildProcess : ConsoleBaseProcess
 
             var maxValues = _tree.maxProj_FieldLengths();
 
-            WriteOutput_Service.write_Lines(3, "Build Tree ProjectS");
+            WriteOutput_Service.write_Lines(3, "Build Tree Projects");
 
-            foreach (var item in _tree._Branches.Values)
+            var hasSearch = _CxCommandService.getCommandArg("-s", out string? Search_V);
+            var hasPublish = _CxCommandService.getCommandArg("-p", out string? Publish_V);
+
+            var Publish_flag_V = Publish_V != null && Publish_V.ToLower() switch
             {
-                if (item.References.Count > 0)
-                    WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Cannot Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
-                else
-                    WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Can Publish", item.Proj_Name, maxValues.max_name + 3)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
+                "set" => true,
+                "true" => true,
+                "yes" => true,
+                "clear" => false,
+                "false" => false,
+                "no" => false,
+                _ => errorCondion()
+            };
 
+            bool errorCondion() {
+                hasPublish = false;
+                WriteOutput_Service.write_Lines(3, "The Publish Arg Value: -p is not valid. Please Use {true, false, yes, no, set, or clear}. ");
+                return false;
+            };
+
+            int[]? wildCardIndex = Search_V?.Select((v, i) => (v, i)).Where(w => w.v == '*').Select(s => s.i).Distinct().ToArray();
+
+            bool hasStart_WildCard = false;
+            bool hasEnd_WildCard = false;
+
+            //Null Ref Check Logic Interfered so wrote code different way
+            if (wildCardIndex?.Length > 0 && Search_V != null)
+            {
+                if(wildCardIndex.Any(a => a > 0 && a < Search_V.Length - 1) || wildCardIndex.Length > 1)
+                {
+                    WriteOutput_Service.write_Lines(3, $"The Search Arg: [-s {Search_V}] Is Invalid",
+                      wildCardIndex.Length > 1? $"Error: {wildCardIndex.Length} wildcards when only 1 allowed" : "wildcards can only begin or end with a wildcard: *");
+                    return Task.CompletedTask;
+                }
+                
+                hasStart_WildCard = wildCardIndex.Contains(0);
+                hasEnd_WildCard = wildCardIndex.Contains(Search_V.Length - 1);
+            }
+
+            List<string> st = new List<string>();
+
+            if (hasStart_WildCard && Search_V != null)
+            {
+                var part = Search_V?.Substring(1) ?? "";
+                st.AddRange(_tree._Branches.Keys.Where(w => w.EndsWith(part, StringComparison.OrdinalIgnoreCase)));
+            }
+            else if (hasEnd_WildCard && Search_V != null)
+            {
+                var part = new string(Search_V.AsSpan(0, Search_V.Length - 1));
+                st.AddRange(_tree._Branches.Keys.Where(w => w.StartsWith(part, StringComparison.OrdinalIgnoreCase)));
+            }
+            else if(Search_V == null)
+            {
+                st.AddRange(_tree._Branches.Keys);
+            }
+
+
+            foreach (var key in st)
+            {
+                if (!_tree._Branches.TryGetValue(key, out Tree_Branch? item) || item == null)
+                    continue;
+
+                if (item?.References.Count > 0)
+                {
+                    WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Cannot Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; >>> {displayVal("Publish", "No", 6)}");
+                    continue;
+                }
+
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                if (hasSearch && hasPublish)
+                {
+                    item.Publish = Publish_flag_V;
+
+                    WriteOutput_Service
+                        .write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"   Can Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; >>> {displayVal("Publish", item.Publish ? "Yes" : "No", 6)}");
+                }
+                else 
+                {
+                    WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"   Can Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; >>> {displayVal("Publish", item.Publish ? "Yes" : "No", 6)}");
+                }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            }
+
+            if (hasSearch && hasPublish)
+            {
+                _tree.Check_Versions();
+                
+                _tree.update_Publish_Order();
+
+                string CxTree_Output = _tree.ToString();
+
+                File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
             }
 
             return Task.CompletedTask;
