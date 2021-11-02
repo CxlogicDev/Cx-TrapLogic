@@ -31,56 +31,38 @@ internal class BuildProcess : ConsoleBaseProcess
 
     //protected override bool isCanceled { get { return base.isCanceled; } set { base.isCanceled = value; } }
 
-    [CxConsoleAction("tree", "Will discover the build tree and output it to the base directory or the solution", true, CxRegisterTypes.Register)]
-    [CxConsoleActionArg("v", CxConsoleActionArgAttribute.arg_Types.Switch, "Shows the previous tree or build the tree and shows it to the screen.", true, false)]
-    [CxConsoleActionArg("r", CxConsoleActionArgAttribute.arg_Types.Switch, "Will delete the cached .json tree file. nagates", true, false)]
+    [CxConsoleAction("tree", CommandDisplayInfo.tree_action_description, true, CxRegisterTypes.Register)]
+    [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.tree_arg_p__Publish_Description, true, false)]
+    [CxConsoleActionArg("r", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.tree_arg_r__Publish_Description, true, false)]
+    [CxConsoleActionArg("f", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.tree_arg_f__Publish_Description, true, false)]
     public Task DiscoverSolutionTree(CancellationToken cancellationToken)
-    {
-        /*
-          ToDo: handle the cancellationToken through out the method        
-        */
-
-        //WriteOutput_Service.write_Lines(3, $"Solution Path: {_contentRoot.Solution_Dir}");
-
-        //WriteOutput_Service.write_Lines(3, $"Source Path: {_contentRoot.start_Dir}");
-
-        Build_Tree? _tree = null;
-
-        if(_CxCommandService.getCommandArg("-r", out var _) && File.Exists(_contentRoot.CxTreeRootPath))
+    {       
+        if (_CxCommandService.getCommandArg("-r", out var _) && File.Exists(_contentRoot.CxTreeRootPath))
             File.Delete(_contentRoot.CxTreeRootPath);//Delete the caches tree
-        else if (File.Exists(_contentRoot.CxTreeRootPath) && _CxCommandService.getCommandArg("-v", out string? i_val))
+
+        if (!File.Exists(_contentRoot.CxTreeRootPath))
         {
-            /***/
-            StringBuilder CxTree_data = new StringBuilder();
-            using StreamReader sr = File.OpenText(_contentRoot.CxTreeRootPath);
-            while (!sr.EndOfStream)
-                CxTree_data.Append(sr.ReadLine());
+            var tree_1 = Build_Tree.LoadFrom_File(_contentRoot.start_Dir);
 
-            var fullString = CxTree_data.ToString();
+            tree_1.Check_Versions();
 
-            _tree = Build_Tree.LoadFrom_Json(CxTree_data.ToString());
-            /*  */
-            write_Output(_tree, _contentRoot.CxTreeRootPath);
-
-            return Task.CompletedTask;
+            tree_1.publish_Branch_File(_contentRoot.CxTreeRootPath, true);
         }
-        //else if (File.Exists(_contentRoot.CxTreeRootPath))
-        //{
 
-        //}
+        //If the File exists Use it. if not Then mov into create it
+        Build_Tree? _tree = Build_Tree.LoadFrom_File(_contentRoot.start_Dir, _contentRoot.CxTreeRootPath);
 
-        _tree = new Build_Tree(_contentRoot.start_Dir);
+        if (internal_Publish(_tree))
+            _tree.publish_Branch_File(_contentRoot.CxTreeRootPath, true);
 
-        _tree.Check_Versions();
+        //Pull the list of appoves Projects
+        var Project_List = internal_Filter(_tree);
 
-        _tree.update_Publish_Order();
+        write_Output(_tree, Project_List, _contentRoot.CxTreeRootPath);
 
-        string CxTree_Output = _tree.ToString();
-        File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
+        return Task.CompletedTask;
 
-        write_Output(_tree, _contentRoot.CxTreeRootPath);
-
-        void write_Output(Build_Tree? _tree, string CxTreeRootPath)
+        void write_Output(Build_Tree? _tree, IEnumerable<string> ob_Keys, string CxTreeRootPath)
         {
             WriteOutput_Service.write_Lines();
 
@@ -91,24 +73,20 @@ internal class BuildProcess : ConsoleBaseProcess
 
             WriteOutput_Service.write_Lines(3, "Build Tree ProjectS");
 
-            foreach (var item in _tree.ordered_Branchs)
+            foreach (var item in _tree.Filter_Ordered_Branches(ob_Keys))
             {
                 WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"{item.Publish_Order}", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
                 if (item.References.Count > 0)
-                    foreach (var _ref in item.References)
+                    foreach (var _ref in item.References.Where(w => w.isLocal))
                     {
-                        throw new NotImplementedException("I now have references to display check and compleate this for display ref");
-                        //WriteOutput_Service.write_Lines("Project".Length + 5, $">> Reference: {_ref.name}; Version: {_ref.version}");
+                        WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(10)}>> Reference: {_ref.name}; Version: {_ref.version}");
                     }
 
                 WriteOutput_Service.write_Lines();
             }
 
             WriteOutput_Service.write_Lines(3, $"CxTreeRoot Path: {CxTreeRootPath}; File: {(File.Exists(CxTreeRootPath) ? "" : "Does Not ")}Exists");
-
         }
-
-        return Task.CompletedTask;
     }
 
     [CxConsoleAction("build", CommandDisplayInfo.build_action_description, false, CxRegisterTypes.Preview)]
@@ -117,9 +95,6 @@ internal class BuildProcess : ConsoleBaseProcess
     //[CxConsoleActionArg("report", CxConsoleActionArgAttribute.arg_Types.Value, CommandDisplayInfo.build_arg_report__Publish_Description, false, false)]
     public async Task BuildSolutionTree(CancellationToken cancellationToken)
     {
-        /*
-         
-         */
         
         if (!_contentRoot.hasCxTreeFile)
         {
@@ -132,12 +107,14 @@ internal class BuildProcess : ConsoleBaseProcess
 
         bool publish_All = _CxCommandService.getCommandArg("-pa", out var _);
 
-        Build_Tree _tree = _contentRoot.get_CurrentTree();
+        Build_Tree _tree = Build_Tree.LoadFrom_File(_contentRoot.start_Dir, _contentRoot.CxTreeRootPath); 
 
         var maxValues = _tree.maxProj_FieldLengths();
 
         if (publish_All || publish)
         {
+            NuGetconfiguration nuGet = NuGetconfiguration.Build_NuGet_Config(_contentRoot.Solution_Dir, _contentRoot.CxTreeNupkgPath);
+
             Dictionary<string, bool> Publis_Reference_To_Me = new();
 
             var build_List = _tree.update_Publish_Order().Where(w => publish_All || w.Publish).ToArray();
@@ -227,31 +204,216 @@ internal class BuildProcess : ConsoleBaseProcess
 
     }
 
-    [CxConsoleAction("view", "Will show the full project tree and tell what can and cannot publish", true, CxRegisterTypes.Preview)]
-    [CxConsoleActionArg("s", CxConsoleActionArgAttribute.arg_Types.Value, "Search and return only project that have the search term in the name", true, false)]
-    [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Value, "Tells the application to set the publish flag to true or false Valid values: {true, false, yes, no, set, or clear}. use with Search arg: -s. Only Publishable projects can be set", true, false)]
+    /// <summary>
+    /// List all Projects under the solution that can be built and the status of them all
+    /// </summary>
+    /// <param name="cancellationToken">The token to cancle the action</param>
+    [CxConsoleAction("list", CommandDisplayInfo.view_action_description, true, CxRegisterTypes.Preview)]
+    [CxConsoleActionArg("s", CxConsoleActionArgAttribute.arg_Types.Value, CommandDisplayInfo.view_arg_s__Publish_Description, true, false)]
     public Task ListProjects(CancellationToken cancellationToken)
     {
-        if (File.Exists(_contentRoot.CxTreeRootPath))
-        {
-            //ToDo: Reconsider how the tree is built if a View already exists
-            var _tree = new Build_Tree(_contentRoot.start_Dir);
+        //if (File.Exists(_contentRoot.CxTreeRootPath))
+        //{
+        //}
+        //ToDo: Reconsider how the tree is built if a View already exists
+        var _tree = new Build_Tree(_contentRoot.start_Dir);
 
-            _tree.Check_Versions();
-            
+        _tree.Check_Versions();
+
+        WriteOutput_Service.write_Lines();
+
+        if (_tree == null)
+            return Task.CompletedTask;
+
+        var maxValues = _tree.maxProj_FieldLengths();
+
+        WriteOutput_Service.write_Lines(3, "Build Tree Projects");
+
+        var hasSearch = _CxCommandService.getCommandArg("-s", out string? Search_V);
+
+        int[]? wildCardIndex = Search_V?.Select((v, i) => (v, i)).Where(w => w.v == '*').Select(s => s.i).Distinct().ToArray();
+
+        bool hasStart_WildCard = false;
+        bool hasEnd_WildCard = false;
+
+        //Null Ref Check Logic Interfered so wrote code different way
+        if (wildCardIndex?.Length > 0 && Search_V != null)
+        {
+            if (wildCardIndex.Any(a => a > 0 && a < Search_V.Length - 1) || wildCardIndex.Length > 1)
+            {
+                WriteOutput_Service.write_Lines(3, $"The Search Arg: [-s {Search_V}] Is Invalid",
+                  wildCardIndex.Length > 1 ? $"Error: {wildCardIndex.Length} wildcards when only 1 allowed" : "wildcards can only begin or end with a wildcard: *");
+                return Task.CompletedTask;
+            }
+
+            hasStart_WildCard = wildCardIndex.Contains(0);
+            hasEnd_WildCard = wildCardIndex.Contains(Search_V.Length - 1);
+        }
+
+        List<string> st = new List<string>();
+
+        if (hasStart_WildCard && Search_V != null)
+        {
+            var part = Search_V?.Substring(1) ?? "";
+            st.AddRange(_tree._Branches.Keys.Where(w => w.EndsWith(part, StringComparison.OrdinalIgnoreCase)));
+        }
+        else if (hasEnd_WildCard && Search_V != null)
+        {
+            var part = new string(Search_V.AsSpan(0, Search_V.Length - 1));
+            st.AddRange(_tree._Branches.Keys.Where(w => w.StartsWith(part, StringComparison.OrdinalIgnoreCase)));
+        }
+        else if (Search_V == null)
+        {
+            st.AddRange(_tree._Branches.Keys);
+        }
+
+        foreach (var key in st)
+        {
+            if (!_tree._Branches.TryGetValue(key, out Tree_Branch? item) || item == null)
+                continue;
+
+            if (item?.References.Count > 0)
+            {
+                WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Cannot Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; ");//ToDo: >>> {displayVal("Publish", "No", 6)}
+                continue;
+            }
+
+            WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"   Can Publish", item?.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item?.Proj_Version, maxValues.max_Version)}; "); //Todo: >>> {displayVal("Publish", item.Publish ? "Yes" : "No", 6)}
+        }
+
+        return Task.CompletedTask;
+
+
+        /*
+         
+         _tree = new Build_Tree(_contentRoot.start_Dir);
+
+        _tree.Check_Versions();
+
+        _tree.update_Publish_Order();
+
+        string CxTree_Output = _tree.ToString();
+        File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
+
+        write_Output(_tree, _contentRoot.CxTreeRootPath);
+
+        void write_Output(Build_Tree? _tree, string CxTreeRootPath)
+        {
             WriteOutput_Service.write_Lines();
 
             if (_tree == null)
-                return Task.CompletedTask;
+                return;
 
             var maxValues = _tree.maxProj_FieldLengths();
 
-            WriteOutput_Service.write_Lines(3, "Build Tree Projects");
+            WriteOutput_Service.write_Lines(3, "Build Tree ProjectS");
 
-            var hasSearch = _CxCommandService.getCommandArg("-s", out string? Search_V);
-            var hasPublish = _CxCommandService.getCommandArg("-p", out string? Publish_V);
+            foreach (var item in _tree.ordered_Branchs)
+            {
+                WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"{item.Publish_Order}", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
+                if (item.References.Count > 0)
+                    foreach (var _ref in item.References)
+                    {
+                        throw new NotImplementedException("I now have references to display check and compleate this for display ref");
+                        //WriteOutput_Service.write_Lines("Project".Length + 5, $">> Reference: {_ref.name}; Version: {_ref.version}");
+                    }
 
-            var Publish_flag_V = Publish_V != null && Publish_V.ToLower() switch
+                WriteOutput_Service.write_Lines();
+            }
+
+            WriteOutput_Service.write_Lines(3, $"CxTreeRoot Path: {CxTreeRootPath}; File: {(File.Exists(CxTreeRootPath) ? "" : "Does Not ")}Exists");
+
+        }
+         
+         */
+
+
+        //WriteOutput_Service.write_Lines($"The File {_contentRoot.CxTreeRootPath} Could not be found. ",
+        //    "Please Call [project tree] first to continue. ");
+
+        //return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Gets a list of all of the Searchable projects
+    /// </summary>
+    /// <param name="_tree">The tree to process for</param>
+    IList<string> internal_Filter(Build_Tree _tree)
+    {
+        List<string> st = new List<string>();
+
+        if (_tree == null)
+            return st;
+
+        var hasSearch = _CxCommandService.getCommandArg("-f", out string? filter_V) && filter_V.hasCharacters();
+
+        if (!hasSearch && _tree.ordered_Branchs is not null && _tree.ordered_Branchs.Length > 0)
+        {
+            List<string> temp = new(_tree.ordered_Branchs.Where(w => w.Proj_Name.hasCharacters()).Select(s => s.Proj_Name ?? ""));
+            st.AddRange(temp);
+            
+            return st;
+        }
+
+        int[]? wildCardIndex = filter_V?.Select((v, i) => (v, i)).Where(w => w.v == '*').Select(s => s.i).Distinct().ToArray();
+
+        bool hasStart_WildCard = false;
+        bool hasEnd_WildCard = false;
+
+        //Null Ref Check Logic Interfered so wrote code different way
+        if (wildCardIndex?.Length > 0 && filter_V != null)
+        {
+            if (wildCardIndex.Any(a => a > 0 && a < filter_V.Length - 1) || wildCardIndex.Length > 1)
+            {
+                WriteOutput_Service.write_Lines(3, $"The Search Arg: [-s {filter_V}] Is Invalid",
+                  wildCardIndex.Length > 1 ? $"Error: {wildCardIndex.Length} wildcards when only 1 allowed" : "wildcards can only begin or end with a wildcard: *");
+                return new List<string>();
+            }
+
+            hasStart_WildCard = wildCardIndex.Contains(0);
+            hasEnd_WildCard = wildCardIndex.Contains(filter_V.Length - 1);
+        }
+
+        if (hasStart_WildCard && filter_V != null)
+        {
+            var part = filter_V?.Substring(1) ?? "";
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+            st.AddRange(_tree._Branches.Keys.Where(w => w.EndsWith(part, StringComparison.OrdinalIgnoreCase)));
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+        }
+        else if (hasEnd_WildCard && filter_V != null)
+        {
+            var part = new string(filter_V.AsSpan(0, filter_V.Length - 1));
+#pragma warning disable CS8602
+            st.AddRange(_tree._Branches.Keys.Where(w => w.StartsWith(part, StringComparison.OrdinalIgnoreCase)));
+#pragma warning restore CS8602
+        }
+        else if (filter_V == null)
+        {
+#pragma warning disable CS8602
+            st.AddRange(_tree._Branches.Keys);
+#pragma warning restore CS8602
+        }
+
+        return st;
+    }
+
+    /// <summary>
+    /// Test to see if the process tree is able to set the publish
+    /// </summary>
+    /// <param name="_tree">The tree to process for</param>
+    bool internal_Publish(Build_Tree _tree)
+    {
+        
+        IList<string> Proj_List = internal_Filter(_tree);
+
+        bool canPublish = false;
+
+        if (_CxCommandService.getCommandArg("-p", out string? Publish_V))
+        {
+            canPublish = true;
+
+            var Publish_flag_V = Publish_V.hasCharacters() && Publish_V.ToLower() switch
             {
                 "set" => true,
                 "true" => true,
@@ -262,95 +424,26 @@ internal class BuildProcess : ConsoleBaseProcess
                 _ => errorCondion()
             };
 
-            bool errorCondion() {
-                hasPublish = false;
+            bool errorCondion()
+            {
+                canPublish = false;
                 WriteOutput_Service.write_Lines(3, "The Publish Arg Value: -p is not valid. Please Use {true, false, yes, no, set, or clear}. ");
                 return false;
             };
 
-            int[]? wildCardIndex = Search_V?.Select((v, i) => (v, i)).Where(w => w.v == '*').Select(s => s.i).Distinct().ToArray();
-
-            bool hasStart_WildCard = false;
-            bool hasEnd_WildCard = false;
-
-            //Null Ref Check Logic Interfered so wrote code different way
-            if (wildCardIndex?.Length > 0 && Search_V != null)
-            {
-                if(wildCardIndex.Any(a => a > 0 && a < Search_V.Length - 1) || wildCardIndex.Length > 1)
+            if (canPublish)
+                foreach (var proj_key in _tree._Branches.Keys)
                 {
-                    WriteOutput_Service.write_Lines(3, $"The Search Arg: [-s {Search_V}] Is Invalid",
-                      wildCardIndex.Length > 1? $"Error: {wildCardIndex.Length} wildcards when only 1 allowed" : "wildcards can only begin or end with a wildcard: *");
-                    return Task.CompletedTask;
+                    if (proj_key.isNull() || proj_key.hasNoCharacters() || !Proj_List.Contains(proj_key))
+                        continue;
+
+                    //Set Branch as active
+                    _tree.set_Branch_Published(proj_key, Publish_flag_V);
                 }
-                
-                hasStart_WildCard = wildCardIndex.Contains(0);
-                hasEnd_WildCard = wildCardIndex.Contains(Search_V.Length - 1);
-            }
-
-            List<string> st = new List<string>();
-
-            if (hasStart_WildCard && Search_V != null)
-            {
-                var part = Search_V?.Substring(1) ?? "";
-                st.AddRange(_tree._Branches.Keys.Where(w => w.EndsWith(part, StringComparison.OrdinalIgnoreCase)));
-            }
-            else if (hasEnd_WildCard && Search_V != null)
-            {
-                var part = new string(Search_V.AsSpan(0, Search_V.Length - 1));
-                st.AddRange(_tree._Branches.Keys.Where(w => w.StartsWith(part, StringComparison.OrdinalIgnoreCase)));
-            }
-            else if(Search_V == null)
-            {
-                st.AddRange(_tree._Branches.Keys);
-            }
-
-
-            foreach (var key in st)
-            {
-                if (!_tree._Branches.TryGetValue(key, out Tree_Branch? item) || item == null)
-                    continue;
-
-                if (item?.References.Count > 0)
-                {
-                    WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Cannot Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; >>> {displayVal("Publish", "No", 6)}");
-                    continue;
-                }
-
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                if (hasSearch && hasPublish)
-                {
-                    item.Publish = Publish_flag_V;
-
-                    WriteOutput_Service
-                        .write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"   Can Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; >>> {displayVal("Publish", item.Publish ? "Yes" : "No", 6)}");
-                }
-                else 
-                {
-                    WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"   Can Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; >>> {displayVal("Publish", item.Publish ? "Yes" : "No", 6)}");
-                }
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-            }
-
-            if (hasSearch && hasPublish)
-            {
-                _tree.Check_Versions();
-                
-                _tree.update_Publish_Order();
-
-                string CxTree_Output = _tree.ToString();
-
-                File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
-            }
-
-            return Task.CompletedTask;
         }
-
-
-        WriteOutput_Service.write_Lines($"The File {_contentRoot.CxTreeRootPath} fould not be found. ",
-            "Please Call [project tree] first to continue. ");
-
-        return Task.CompletedTask;
+        return canPublish;
     }
+    
 
     /// <summary>
     /// Creates a display point 
@@ -444,22 +537,27 @@ internal class BuildProcess : ConsoleBaseProcess
         /// </summary>
         public bool hasCxTreeFile => File.Exists(CxTreeRootPath);
 
+        /* Marked for death
         /// <summary>
         /// gets the Content Tree object
         /// </summary>
-        public Build_Tree get_CurrentTree()
-        {
-            StringBuilder CxTree_data = new StringBuilder();
-            using StreamReader sr = File.OpenText(CxTreeRootPath);
-            while (!sr.EndOfStream)
-                CxTree_data.Append(sr.ReadLine());
+        public Build_Tree get_CurrentTree() => Build_Tree.LoadFrom_File(start_Dir, CxTreeRootPath);
+        //{
 
-            var fullString = CxTree_data.ToString();
+        //    Build_Tree _tree 
 
-            Build_Tree? _tree = Build_Tree.LoadFrom_Json(CxTree_data.ToString());
+        //    StringBuilder CxTree_data = new StringBuilder();
+        //    using StreamReader sr = File.OpenText(CxTreeRootPath);
+        //    while (!sr.EndOfStream)
+        //        CxTree_data.Append(sr.ReadLine());
 
-            return _tree;
-        }
+        //    var fullString = CxTree_data.ToString();
+
+        //    Build_Tree? _tree = Build_Tree.LoadFrom_Json(CxTree_data.ToString());
+
+        //    return _tree;
+        //}
+        //*/
     }
 
     /// <summary>
@@ -467,10 +565,23 @@ internal class BuildProcess : ConsoleBaseProcess
     /// </summary>
     static class CommandDisplayInfo
     {
+        public const string tree_action_description = "Will discover the build tree and output it to the base directory or the solution";
+        public const string tree_arg_p__Publish_Description = "Sets the Publish flag for all projects in the path.";
+        public const string tree_arg_r__Publish_Description = "Will delete the cached .json tree file so that it can be rebuilt with any newly added projects to the build list.";
+        public const string tree_arg_f__Publish_Description = "Will filter and show projects by the filtered value supplied. Use [{filter search}] [{filter search}:{ (true | false) | (yes | no) | (set | clear) }] turn build on or off Ex: 1 [] [:]  ";
+
         public const string build_action_description = "Will build all project in the tree.";        
         public const string build_arg_p__Publish_Description = "Publishes the build tree where Tree_Branch.Publish is true and any project that reference the one that is being published";
         public const string build_arg_pa__Publish_Description = "Publishes all of the projects in the build tree.";
         public const string build_arg_report__Publish_Description = "Writes a report of the build and publish process. supply a exsiting directory location to overide default location.";
+
+        //view
+        public const string view_action_description = "Will show a list of projects and tell what can and cannot publish";
+        public const string view_arg_f__Publish_Description = "Will show the full build";
+        public const string view_arg_s__Publish_Description = "Search and return only project that have the search term in the name";
+        //public const string view_arg_p__Publish_Description = "Tells the application to set the publish flag to true or false Valid values: {true, false, yes, no, set, or clear}. use with Search arg: -s. Only Publishable projects can be set";
+
+
     }
 
 
@@ -482,321 +593,4 @@ internal class BuildProcess : ConsoleBaseProcess
         return Task.CompletedTask;
     }
     //*/
-}
-
-public record Build_Tree
-{    
-    internal Dictionary<string, Tree_Branch> _Branches { get; set; } = new();
-    
-    public string? rootPath { get; set; }
-
-    public Build_Tree() { }
-
-    /// <summary>
-    /// Builds the tree using the Root Path
-    /// </summary>
-    /// <param name="root_Path"></param>
-    public Build_Tree(string root_Path)
-    {
-        const string exclude = "Cx-TrapConsole.csproj";
-        
-        if (Directory.Exists(root_Path))
-        {
-            rootPath = root_Path;
-
-            var Dir_Search_Results = Dir_Search(root_Path).Where(w => !w.EndsWith(exclude, StringComparison.OrdinalIgnoreCase));
-            
-            foreach (var tb in Dir_Search_Results.Select(s => new Tree_Branch(s)))
-            {
-                if (tb?.Proj_Name != null)
-                    _Branches.Add(tb.Proj_Name, tb);
-            }
-        }
-    }
-
-    //void temp(IEnumerable<string> Branch_Paths)
-    //{
-    //    foreach (var tb in Branch_Paths.Select(s => new Tree_Branch(s)))
-    //    {
-    //        if (tb?.Proj_Name != null)
-    //            _Branches.Add(tb.Proj_Name, tb);
-    //    }
-    //}
-
-    /// <summary>
-    /// A cached values of update_Publish_Order(); Note: Must Call update_Publish_Order() first
-    /// </summary>
-    public Tree_Branch[] ordered_Branchs { get; private set;  } = new Tree_Branch[0];
-
-    /// <summary>
-    /// Attches the build order for any active projects
-    /// </summary>
-    /// <exception cref="NotImplementedException"></exception>
-    public Tree_Branch[] update_Publish_Order()
-    {        
-        Dictionary<int, Tree_Branch> Branch_Order = new();
-
-        //Pull All Trees that have no References
-        var No_Refs = _Branches
-            .Where(w => w.Value.References.Count == 0);
-
-        int ct = 0, max_No_Refs = 0;
-        foreach (var obj in No_Refs)
-        {
-            _Branches[obj.Key].Publish_Order = 1;
-            Branch_Order[++ct] = obj.Value;
-        }
-
-        max_No_Refs = Branch_Order.Select(s => s.Key).Max();
-
-        //Pull All that have only PackageReferences
-        var Package_Ref = _Branches
-            .Where(w => w.Value.References.Count > 0 && w.Value.References.All(a => a.referenceType == Tree_Branch_Referenece.PackageReferenceName));
-
-        List<Tree_Branch> order = new List<Tree_Branch>();
-
-        foreach (var obj in Package_Ref)
-        {
-            if(order.Count == 0)
-            {
-                order.Add(obj.Value);
-                continue;
-            }
-
-            //all Ref for the current Obj
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
-            string[]? allRefName = obj.Value.References.Select(s => s.name).ToArray();
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
-
-            //Get the max index to figure out where to upload
-            var idx = order.Where(o => allRefName.Contains(o.Proj_Name)).Select((v, i) => i).Max();
-
-            order.Insert(idx + 1, obj.Value);
-            throw new NotImplementedException("I now have Project that have reference. I can now finish this method.");
-        }
-
-        //Ignore any that have Project References
-
-        ordered_Branchs =  Branch_Order.OrderBy(o => o.Key).Select(s => s.Value).ToArray();
-
-        return ordered_Branchs;
-    }
-
-    /// <summary>
-    /// Will run through all projects and make sure they have a starting version number
-    /// </summary>    
-    public void Check_Versions()
-    {
-        foreach (var key in _Branches.Keys)
-            if (_Branches[key].Proj_Version.hasNoCharacters())
-                _Branches[key].IncreseVersion();
-    }
-
-    /// <summary>
-    /// Seraches for Braches from the root.
-    /// </summary>
-    /// <param name="dir_to_Search">The root Path To Search</param>
-    /// <returns></returns>
-    string[] Dir_Search(string root_dir_to_Search)
-    {
-        IList<string> tree_view = new List<string>();
-        Recursion(root_dir_to_Search);
-
-        void Recursion(string dir_to_Search)
-        {
-            foreach (var item in Directory.GetFiles(dir_to_Search, "*.csproj"))
-                tree_view.Add(item);
-
-            foreach (var item in Directory.GetDirectories(dir_to_Search))
-                Recursion(item);            
-        }
-
-        return tree_view.Distinct().ToArray();
-    }
-
-    /// <summary>
-    /// Gets the Max Lengths values from the Tree_Branch values. maxProjValueLengths() called if order not set
-    /// </summary>
-    public (bool isValid, int max_name, int max_Namespace, int max_Version, int max_Path, int max_Framework) maxProj_FieldLengths()
-    {
-        (bool isValid, int max_name, int max_Namespace, int max_Version, int max_Path, int max_Framework) result = 
-            (false, 0, 0, 0, 0, 0);
-
-        if (ordered_Branchs.Length > 0 || (!(ordered_Branchs.Length > 0) && update_Publish_Order().Length > 0))
-        {
-            result.max_name = ordered_Branchs.Select(s => (s.Proj_Name?.Length ?? 0)).Max();
-            result.max_Namespace = ordered_Branchs.Select(s => (s.Proj_Namespace?.Length ?? 0)).Max();
-            result.max_Version = ordered_Branchs.Select(s => (s.Proj_Version?.Length ?? 0)).Max();
-            result.max_Path = ordered_Branchs.Select(s => (s.Proj_Path?.Length ?? 0)).Max();
-            result.max_Framework = ordered_Branchs.Select(s => (s.Proj_Framework?.Length ?? 0)).Max();
-            result.isValid = true;
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Returns the json string that can be saved to file 
-    /// </summary>
-    /// <returns></returns>
-    public override string ToString()
-    {
-        if (!(ordered_Branchs.Length > 0))
-            update_Publish_Order();
-
-        return ordered_Branchs.ToJson();
-
-    }
-    
-    public static Build_Tree LoadFrom_Json(string json_string) =>
-        LoadFrom_Branches(json_string.FromJson<Tree_Branch[]>() ?? new Tree_Branch[0]);
-
-    /// <summary>
-    /// Load a Tree by branches
-    /// </summary>
-    /// <param name="branches">The branches to load</param>
-    /// <exception cref="ArgumentNullException">if a branch is null or the name is null</exception>
-    public static Build_Tree LoadFrom_Branches(IEnumerable<Tree_Branch> branches)
-    {
-        Build_Tree result = new Build_Tree();
-
-        if (branches?.Count() > 0)
-            foreach (var tb in branches.Distinct())
-                result._Branches.Add(tb.Proj_Name ?? throw new ArgumentNullException(nameof(tb.Proj_Name)), tb);
-
-        return result;
-    }
-}
-
-public record Tree_Branch
-{
-    public Tree_Branch() { }
-
-    public Tree_Branch(string Project_Path)
-    {
-        if (Project_Path.hasNoCharacters())
-            throw new ArgumentException("The Project_Path is missing");
-
-        if (!File.Exists(Project_Path))
-            throw new FileNotFoundException($"The file: [{Project_Path ?? "null"}] was not found");
-
-        Proj_Path = Project_Path;
-        string[] Proj_Path_Parts = Proj_Path.Split(Path.DirectorySeparatorChar);
-        Proj_Directory = Path.Combine(Proj_Path_Parts[0..^1]);
-
-        System.Xml.XmlDocument doc = new();
-        doc.Load(Proj_Path);
-        Load_Properties(doc);
-        Load_References(doc);        
-    }
-
-    public string? Proj_Path { get; set; }
-
-    public string? Proj_Directory { get; set; }
-    public string? Proj_Name { get; set; }
-    public string? Proj_Namespace { get; set; }
-    public string? Proj_Version {  get; set; }
-    public string? Proj_Framework { get; set; }
-
-    public bool Publish { get; set; }
-    public int Publish_Order { get; set; }
-
-    void Load_Properties(System.Xml.XmlDocument doc)
-    {   
-        var ProjectNode = doc["Project"];//["PropertyGroup"];
-        if (ProjectNode == null)
-            return;
-
-        var PropertyGroup = ProjectNode["PropertyGroup"];
-        if (PropertyGroup == null)
-            return;
-
-        Proj_Version = PropertyGroup["Version"]?.InnerText ?? string.Empty;
-        Proj_Framework = PropertyGroup["TargetFramework"]?.InnerText ?? string.Empty;
-        Proj_Name = Proj_Path?.Split(Path.DirectorySeparatorChar).Last().Split('.')[0] ?? throw new ArgumentNullException(nameof(Proj_Path));
-        Proj_Namespace = PropertyGroup["RootNamespace"]?.InnerText ?? string.Empty;
-    }
-
-    public List<Tree_Branch_Referenece> References { get; set; } = new();
-  
-    void Load_References(System.Xml.XmlDocument doc)
-    {
-        foreach(System.Xml.XmlElement node in doc.GetElementsByTagName("ItemGroup"))
-        {
-            var PackageRefs = node.SelectNodes(Tree_Branch_Referenece.PackageReferenceName);
-            if(PackageRefs?.Count > 0)
-                foreach (System.Xml.XmlElement refNode in PackageRefs)
-                    References.Add(Tree_Branch_Referenece.PackageReference(refNode.GetAttribute("Include"), refNode.GetAttribute("Version")));
-
-            var ProjectRefs = node.SelectNodes(Tree_Branch_Referenece.ProjectReferenceName);
-            if (ProjectRefs?.Count > 0)
-                foreach (System.Xml.XmlElement projNode in ProjectRefs)
-                    References.Add(Tree_Branch_Referenece.ProjectReference(projNode.GetAttribute("Include")));
-        }
-    }
-
-    internal void IncreseVersion()
-    {
-        if (!File.Exists(Proj_Path))
-            throw new FileNotFoundException($"Could not find .csproj: {Proj_Path}");
-
-        const string baseVersion = "1.0.0.0";
-        const string VersionPropName = "Version";
-
-        System.Xml.XmlDocument doc = new();
-        doc.Load(Proj_Path);
-
-        var ProjectNode = doc["Project"];
-        if (ProjectNode == null)
-            throw new FileLoadException($"Not a valid .csproj file: {Proj_Path}; Missing [Project] Section");
-
-        var PropertyGroup = ProjectNode["PropertyGroup"];
-        if (PropertyGroup == null)
-            throw new FileLoadException($"Not a valid .csproj file: {Proj_Path}; Missing [PropertyGroup] Section");
-
-        var PropertyGroup_Version = PropertyGroup[VersionPropName];
-
-        if(PropertyGroup_Version != null && Proj_Version.hasNoCharacters())
-        {
-            Proj_Version = PropertyGroup_Version.InnerText;
-        }
-
-        //Increase Posibly 
-        var splitVersion =  (Proj_Version != null && Proj_Version.hasCharacters()? Proj_Version : baseVersion).Split('.');
-        var idx = splitVersion.Select((x, i) => i).Max();
-
-        splitVersion[idx] = $"{((splitVersion[idx].toInt32() ?? 0) + 1)}";
-
-        Proj_Version = string.Join(".", splitVersion);
-
-        if (PropertyGroup_Version != null)
-        {
-            PropertyGroup_Version.InnerText = Proj_Version;
-        }
-        else
-        {
-            PropertyGroup_Version = doc.CreateElement(VersionPropName);
-            PropertyGroup_Version.InnerText = Proj_Version;
-            PropertyGroup.AppendChild(PropertyGroup_Version);
-        }
-            
-        doc.Save(Proj_Path);
-    }
-}
-
-public record Tree_Branch_Referenece
-{
-
-    public const string PackageReferenceName = nameof(PackageReference);
-    public const string ProjectReferenceName = nameof(ProjectReference);
-
-    public static Tree_Branch_Referenece PackageReference(string Name, string Version) => new() { name = Name, version = Version, referenceType = PackageReferenceName };
-
-    public static Tree_Branch_Referenece ProjectReference(string Name) => new() { name = Name, referenceType = ProjectReferenceName };
-
-    //public enum ReferenceType { Dll, Package, Project  }
-    //public ReferenceType referenceType { get; set; }
-    public string? referenceType { get; set; }
-    public string? name { get; set; }
-    public string? version { get; set; }
 }

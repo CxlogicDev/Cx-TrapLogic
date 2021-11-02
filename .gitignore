@@ -13,7 +13,8 @@ node_modules/
 src/SignalR/clients/**/dist/
 modules/
 */.ignore/
-.Cx-Trap-Build/
+.Cx-Trap-*/
+#.Cx-Trap-packages/
 
 # User-specific files
 
@@ -39,6 +40,7 @@ TestResult.xml
 
 # Files to exclude
 #.*.json
+/NuGet.Config
 
 # File extensions
 *.aps
