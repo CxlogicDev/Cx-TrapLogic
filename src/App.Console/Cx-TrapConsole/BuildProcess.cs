@@ -71,11 +71,11 @@ internal class BuildProcess : ConsoleBaseProcess
 
             var maxValues = _tree.maxProj_FieldLengths();
 
-            WriteOutput_Service.write_Lines(3, "Build Tree ProjectS");
+            WriteOutput_Service.write_Lines(3, "Build Tree Projects");
 
             foreach (var item in _tree.Filter_Ordered_Branches(ob_Keys))
             {
-                WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"{item.Publish_Order}", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
+                WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"{item.Publish_Order}", item.Proj_Name, maxValues.max_name)}; {displayVal("Dev-Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
                 if (item.References.Count > 0)
                     foreach (var _ref in item.References.Where(w => w.isLocal))
                     {
@@ -90,12 +90,12 @@ internal class BuildProcess : ConsoleBaseProcess
     }
 
     [CxConsoleAction("build", CommandDisplayInfo.build_action_description, false, CxRegisterTypes.Preview)]
-    [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_p__Publish_Description, true, false )]
+    [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_p__Publish_Description, true, false)]
     [CxConsoleActionArg("pa", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_pa__Publish_Description, false, false)]
     //[CxConsoleActionArg("report", CxConsoleActionArgAttribute.arg_Types.Value, CommandDisplayInfo.build_arg_report__Publish_Description, false, false)]
     public async Task BuildSolutionTree(CancellationToken cancellationToken)
     {
-        
+
         if (!_contentRoot.hasCxTreeFile)
         {
             //Cannot run write the output and exit
@@ -107,7 +107,7 @@ internal class BuildProcess : ConsoleBaseProcess
 
         bool publish_All = _CxCommandService.getCommandArg("-pa", out var _);
 
-        Build_Tree _tree = Build_Tree.LoadFrom_File(_contentRoot.start_Dir, _contentRoot.CxTreeRootPath); 
+        Build_Tree _tree = Build_Tree.LoadFrom_File(_contentRoot.start_Dir, _contentRoot.CxTreeRootPath);
 
         var maxValues = _tree.maxProj_FieldLengths();
 
@@ -115,13 +115,13 @@ internal class BuildProcess : ConsoleBaseProcess
         {
             NuGetconfiguration nuGet = NuGetconfiguration.Build_NuGet_Config(_contentRoot.Solution_Dir, _contentRoot.CxTreeNupkgPath);
 
-            Dictionary<string, bool> Publis_Reference_To_Me = new();
+            Dictionary<string, (Tree_Branch branch, string Cx_nupkg_Path)> Publis_Reference_To_Me = new();
 
-            var build_List = _tree.update_Publish_Order().Where(w => publish_All || w.Publish).ToArray();
+            var build_List = _tree.update_Publish_Order().OrderBy(o => o.Publish_Order);//.Where(w => publish_All || w.Publish).ToArray();
 
-            if(build_List.Length == 0)
+            if (build_List.Where(w => publish_All || w.Publish).Count() == 0)
             {
-                WriteOutput_Service.write_Lines(3, 
+                WriteOutput_Service.write_Lines(3,
                     "No Projects to build. ",
                     "Set the project/s you want built to true in the tree",
                     "or use Arg -pa to build all projects");
@@ -130,12 +130,12 @@ internal class BuildProcess : ConsoleBaseProcess
 
             foreach (var item in build_List)
             {
+                bool hasMatchedRef = item.References.Where(w => w.isLocal).Any(a => a.name.hasCharacters() && Publis_Reference_To_Me.ContainsKey(a.name));
+
                 if (item.Proj_Name == null)
                     continue;
-                else if (publish && !item.Publish)//|| Publis_Reference_To_Me.any(a => item.ref.any(ia => a))) //Note Check to see if a higher ref project was updated 
+                else if (publish && !item.Publish && !hasMatchedRef) //Note Check to see if a higher ref project was updated 
                     continue;
-
-                Publis_Reference_To_Me[item.Proj_Name] = true;
 
                 string nupkg_Path_Name = $"{item.Proj_Name}.{item.Proj_Version}.nupkg";
 
@@ -143,13 +143,16 @@ internal class BuildProcess : ConsoleBaseProcess
 
                 string Cx_nupkg_Path = Path.Combine(_contentRoot.CxTreeNupkgPath, nupkg_Path_Name);
 
-                if(!Directory.Exists(_contentRoot.CxTreeNupkgPath))
+                Publis_Reference_To_Me[item.Proj_Name] = (item, Cx_nupkg_Path);
+
+                if (hasMatchedRef)//Here is where the references get updated
+                    _tree[item.Proj_Name]?.UpdateReferences(Publis_Reference_To_Me.Values);
+
+                if (!Directory.Exists(_contentRoot.CxTreeNupkgPath))
                     Directory.CreateDirectory(_contentRoot.CxTreeNupkgPath);
 
                 if (File.Exists(nupkg_Path))
-                {
                     WriteOutput_Service.write_Lines(3, $"Deleting {nupkg_Path}");
-                }
 
                 //Quick Write
                 WriteOutput_Service.write_Lines(3, $"Packing {displayVal("Project", item.Proj_Name, maxValues.max_name)} >> {nupkg_Path}");
@@ -174,12 +177,10 @@ internal class BuildProcess : ConsoleBaseProcess
 
                     if (!File.Exists(nupkg_Path))
                         throw new FileNotFoundException($"{nupkg_Path} could not be found. ");
-                                        
+
                     WriteOutput_Service.write_Lines(3, $"Moving {nupkg_Path} >> {(File.Exists(Cx_nupkg_Path) ? "[Overwriting] " : "")}{Cx_nupkg_Path}");
+
                     File.Move(nupkg_Path, Cx_nupkg_Path, true);
-
-                    //
-
                 }
                 catch (Exception ex)
                 {
@@ -189,19 +190,25 @@ internal class BuildProcess : ConsoleBaseProcess
                 }
             }
 
+            foreach (var i in Publis_Reference_To_Me)
+            {
+                try
+                {
+                    //Need to run through the list of processed and update the version numbers.
+                    _tree[i.Key]?.IncreseVersion();
+                }
+                catch (Exception Ex)
+                {
+                    WriteOutput_Service.write_Lines(3, Ex.Message);
+                }
+            }
 
-            /*
-                Need to run through the list of processed and update the version numbers.
+            //Delete the caches tree
+            File.Delete(_contentRoot.CxTreeRootPath);
 
-                delete the exsting tree.
-
-                
-            */
         }
 
-
         return;
-
     }
 
     /// <summary>
@@ -212,9 +219,7 @@ internal class BuildProcess : ConsoleBaseProcess
     [CxConsoleActionArg("s", CxConsoleActionArgAttribute.arg_Types.Value, CommandDisplayInfo.view_arg_s__Publish_Description, true, false)]
     public Task ListProjects(CancellationToken cancellationToken)
     {
-        //if (File.Exists(_contentRoot.CxTreeRootPath))
-        //{
-        //}
+        
         //ToDo: Reconsider how the tree is built if a View already exists
         var _tree = new Build_Tree(_contentRoot.start_Dir);
 
@@ -282,56 +287,6 @@ internal class BuildProcess : ConsoleBaseProcess
         }
 
         return Task.CompletedTask;
-
-
-        /*
-         
-         _tree = new Build_Tree(_contentRoot.start_Dir);
-
-        _tree.Check_Versions();
-
-        _tree.update_Publish_Order();
-
-        string CxTree_Output = _tree.ToString();
-        File.WriteAllText(_contentRoot.CxTreeRootPath, CxTree_Output);
-
-        write_Output(_tree, _contentRoot.CxTreeRootPath);
-
-        void write_Output(Build_Tree? _tree, string CxTreeRootPath)
-        {
-            WriteOutput_Service.write_Lines();
-
-            if (_tree == null)
-                return;
-
-            var maxValues = _tree.maxProj_FieldLengths();
-
-            WriteOutput_Service.write_Lines(3, "Build Tree ProjectS");
-
-            foreach (var item in _tree.ordered_Branchs)
-            {
-                WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"{item.Publish_Order}", item.Proj_Name, maxValues.max_name)}; {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; {displayVal("Build", item.Publish.ToString(), 6)}");
-                if (item.References.Count > 0)
-                    foreach (var _ref in item.References)
-                    {
-                        throw new NotImplementedException("I now have references to display check and compleate this for display ref");
-                        //WriteOutput_Service.write_Lines("Project".Length + 5, $">> Reference: {_ref.name}; Version: {_ref.version}");
-                    }
-
-                WriteOutput_Service.write_Lines();
-            }
-
-            WriteOutput_Service.write_Lines(3, $"CxTreeRoot Path: {CxTreeRootPath}; File: {(File.Exists(CxTreeRootPath) ? "" : "Does Not ")}Exists");
-
-        }
-         
-         */
-
-
-        //WriteOutput_Service.write_Lines($"The File {_contentRoot.CxTreeRootPath} Could not be found. ",
-        //    "Please Call [project tree] first to continue. ");
-
-        //return Task.CompletedTask;
     }
 
     /// <summary>
@@ -403,8 +358,7 @@ internal class BuildProcess : ConsoleBaseProcess
     /// </summary>
     /// <param name="_tree">The tree to process for</param>
     bool internal_Publish(Build_Tree _tree)
-    {
-        
+    {        
         IList<string> Proj_List = internal_Filter(_tree);
 
         bool canPublish = false;
@@ -421,6 +375,8 @@ internal class BuildProcess : ConsoleBaseProcess
                 "clear" => false,
                 "false" => false,
                 "no" => false,
+                "on" => true,
+                "off" => false,
                 _ => errorCondion()
             };
 
@@ -441,6 +397,7 @@ internal class BuildProcess : ConsoleBaseProcess
                     _tree.set_Branch_Published(proj_key, Publish_flag_V);
                 }
         }
+
         return canPublish;
     }
     
@@ -498,7 +455,6 @@ internal class BuildProcess : ConsoleBaseProcess
 
         public Content_Path_Structure(string ContentRoot)
         {
-
             if (!Directory.Exists(ContentRoot))
                 throw new DirectoryNotFoundException($"The content cannot be process because the dirctory: [{ContentRoot}] does not exist!!!!");
 
@@ -537,27 +493,6 @@ internal class BuildProcess : ConsoleBaseProcess
         /// </summary>
         public bool hasCxTreeFile => File.Exists(CxTreeRootPath);
 
-        /* Marked for death
-        /// <summary>
-        /// gets the Content Tree object
-        /// </summary>
-        public Build_Tree get_CurrentTree() => Build_Tree.LoadFrom_File(start_Dir, CxTreeRootPath);
-        //{
-
-        //    Build_Tree _tree 
-
-        //    StringBuilder CxTree_data = new StringBuilder();
-        //    using StreamReader sr = File.OpenText(CxTreeRootPath);
-        //    while (!sr.EndOfStream)
-        //        CxTree_data.Append(sr.ReadLine());
-
-        //    var fullString = CxTree_data.ToString();
-
-        //    Build_Tree? _tree = Build_Tree.LoadFrom_Json(CxTree_data.ToString());
-
-        //    return _tree;
-        //}
-        //*/
     }
 
     /// <summary>
@@ -568,7 +503,7 @@ internal class BuildProcess : ConsoleBaseProcess
         public const string tree_action_description = "Will discover the build tree and output it to the base directory or the solution";
         public const string tree_arg_p__Publish_Description = "Sets the Publish flag for all projects in the path.";
         public const string tree_arg_r__Publish_Description = "Will delete the cached .json tree file so that it can be rebuilt with any newly added projects to the build list.";
-        public const string tree_arg_f__Publish_Description = "Will filter and show projects by the filtered value supplied. Use [{filter search}] [{filter search}:{ (true | false) | (yes | no) | (set | clear) }] turn build on or off Ex: 1 [] [:]  ";
+        public const string tree_arg_f__Publish_Description = "Will filter and show projects by the filtered value supplied. Use [{filter search}] [{filter search}:{ (true:1 | false:0) | (yes:1 | no:0) | (set:1 | clear:0) | (on:1 | Off:0)}] turn build on or off Ex: 1 [] [:]  ";
 
         public const string build_action_description = "Will build all project in the tree.";        
         public const string build_arg_p__Publish_Description = "Publishes the build tree where Tree_Branch.Publish is true and any project that reference the one that is being published";
@@ -583,14 +518,4 @@ internal class BuildProcess : ConsoleBaseProcess
 
 
     }
-
-
-    /*
-    public override Task ProcessAction(CancellationToken cancellationToken)
-    {
-        Console.WriteLine($"WindowBuffer-Width: {Console.BufferWidth}; WindowBuffer-Height: {Console.BufferHeight}");
-
-        return Task.CompletedTask;
-    }
-    //*/
 }

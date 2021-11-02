@@ -84,7 +84,7 @@ public partial class NuGetconfiguration
     /// <summary>
     /// Adds/Updates a packageSource 
     /// </summary>
-    /// <param name="add_object">The package Source to add</param>
+    /// <param name="add_object">The package Source Object to add</param>
     public void Add_PackageSources(params packageSourcesAdd[] add_object)
     {
         var temp = packageSourcesField.isNull() ? new Dictionary<string, packageSourcesAdd>() :
@@ -94,6 +94,10 @@ public partial class NuGetconfiguration
             temp[i.key] = i;
     }
 
+    /// <summary>
+    /// Adds/Updates a PackageRestore object
+    /// </summary>
+    /// <param name="add_object">The Package Restore Object to add </param>
     public void Add_PackageRestore(params configurationAdd[] add_object)
     {
         var temp = packageRestoreField.isNull() ? new Dictionary<string, configurationAdd>() :
@@ -103,6 +107,10 @@ public partial class NuGetconfiguration
             temp[i.key] = i;        
     }
 
+    /// <summary>
+    /// Adds/Updates a Package Management object
+    /// </summary>
+    /// <param name="add_object">The Package Management Object to add</param>
     public void Add_PackageManagement(params configurationAdd[] add_object)
     {
         var temp = packageManagementField.isNull() ? new Dictionary<string, configurationAdd>() :
@@ -143,18 +151,10 @@ public partial class NuGetconfiguration
 
         var path = Path.Combine(solution_Directory, "NuGet.Config");
 
-        //if (File.Exists(path))
-        //{
-        //    //Need to read in the new File
-        //    //throw new NotImplementedException("The inner if file exists has not been configured and is still in development");
-        //}
         if (!File.Exists(path))
         {
-           
-
             try
             {
-
                 //Serilize to xml
                 System.Xml.Serialization.XmlSerializer writer =
                     new System.Xml.Serialization.XmlSerializer(typeof(NuGetconfiguration));
@@ -168,12 +168,11 @@ public partial class NuGetconfiguration
             {
                 Console.WriteLine($"Something went wrong message: {Ex.Message}");                
             }
-
         }
 
         return nuget;
-
     }
+
 }
 
 /// <remarks/>

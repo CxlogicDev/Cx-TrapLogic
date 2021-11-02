@@ -417,6 +417,50 @@ public record Tree_Branch
 
         doc.Save(Proj_Path);
     }
+
+    internal void UpdateReferences(IEnumerable<(Tree_Branch branch, string Cx_nupkg_Path)> Ref_Branches)
+    {
+
+        if (!File.Exists(Proj_Path))
+            throw new FileNotFoundException($"Could not find .csproj: {Proj_Path}");
+
+        System.Xml.XmlDocument doc = new();
+        
+        doc.Load(Proj_Path);
+
+        var ProjectNode = doc["Project"];
+        
+        if (ProjectNode == null)
+            throw new FileLoadException($"Not a valid .csproj file: {Proj_Path}; Missing [Project] Section");
+
+        var ItemGroups = ProjectNode.SelectNodes("ItemGroup");
+
+        if (!ItemGroups.isNull())
+            foreach (System.Xml.XmlElement ItemGroup in ItemGroups)
+            {
+                
+                var PackageReferences = ItemGroup.SelectNodes("PackageReference");
+
+                if (!PackageReferences.isNull())
+                    foreach (System.Xml.XmlElement PackageReference in PackageReferences)
+                    {
+                        string Include = PackageReference.GetAttribute("Include");
+
+                        var Ref_Branch = Ref_Branches.FirstOrDefault(f => f.branch.Proj_Name?.Equals(Include) ?? false);
+
+                        if (Ref_Branch.isNull())
+                            continue;
+
+                        string Version = PackageReference.GetAttribute("Version");
+
+                        if (!Version.isNull() && File.Exists(Ref_Branch.Cx_nupkg_Path))
+                            PackageReference.SetAttribute("Version", Ref_Branch.branch.Proj_Version);
+                    }
+            }
+
+        doc.Save(Proj_Path);
+
+    }
 }
 
 public record Tree_Branch_Referenece
