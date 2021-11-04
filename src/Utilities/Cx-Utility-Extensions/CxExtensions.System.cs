@@ -16,8 +16,7 @@ public static partial class CxExtensions //_System
     /// Test to see if the String has Characters.
     /// </summary>
     /// <param name="str">The string to test</param>
-    /// <param name="allowBlankSpace">Are blank Chars allowed</param>
-    
+    /// <param name="allowBlankSpace">Are blank Chars allowed</param>    
     public static bool hasCharacters([NotNullWhen(true)] this string? str, bool allowBlankSpace = false) => str?.Length > 0 && (allowBlankSpace ? true : str.Trim().Length > 0);
 
     /// <summary>
@@ -32,6 +31,21 @@ public static partial class CxExtensions //_System
     /// <param name="obj"></param>
     /// <returns></returns>
     public static bool isNull([NotNullWhen(false)] this object? Vanity_obj) => Vanity_obj is null;
+
+    /// <summary>
+    /// Quick not null Object Check.
+    /// </summary>
+    /// <param name="Vanity_obj"></param>
+    /// <returns></returns>
+    public static bool isNotNull([NotNullWhen(true)] this object? Vanity_obj) => Vanity_obj is null;
+
+    /// <summary>
+    /// Helps to with null checker to ensure a supplied object is not null. 
+    /// </summary>
+    /// <param name="obj">the object that is returned if not null</param>
+    /// <param name="optionalexception">an optional Exception to return if the object is null. General ArgumentNullException returned if not supplied with a optionalexception</param>
+    [return: NotNull]
+    public static T ErrorIfNull<T>(this T? obj, Exception? optionalexception = null) => obj ?? throw (optionalexception ?? new ArgumentNullException());
 
     /// <summary>
     /// Will produce a list of indexs of where values are stored

@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+	<RootNamespace>CxUtility.EFCoreData</RootNamespace>    
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	  <Version>1.0.0.1</Version>
+	  <PackageId>Cx-Utility-EFCoreData</PackageId>
+	  <Authors>Christifer</Authors>
+	  <Company>CxLogicDev</Company>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0-rc.2.21480.5" />
+  </ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
+	</ItemGroup>
+
+</Project>

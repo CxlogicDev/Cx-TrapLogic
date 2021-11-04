@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>    
+	<RootNamespace>CxData.SQLServer</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<Version>1.0.0.1</Version>
+	<PackageId>Cx-Data-SQLServer</PackageId>
+	<Authors>Christifer</Authors>
+	<Company>CxLogicDev</Company>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Utilities\Cx-Utility-EFCoreData\Cx-Utility-EFCoreData.csproj" />
+  </ItemGroup>
+
+</Project>
