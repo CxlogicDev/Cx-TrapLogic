@@ -37,7 +37,7 @@ public static partial class CxExtensions //_System
     /// </summary>
     /// <param name="Vanity_obj"></param>
     /// <returns></returns>
-    public static bool isNotNull([NotNullWhen(true)] this object? Vanity_obj) => Vanity_obj is null;
+    public static bool isNotNull([NotNullWhen(true)] this object? Vanity_obj) => Vanity_obj is not null;
 
     /// <summary>
     /// Helps to with null checker to ensure a supplied object is not null. 

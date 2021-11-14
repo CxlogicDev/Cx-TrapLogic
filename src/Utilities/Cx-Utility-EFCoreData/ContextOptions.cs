@@ -78,11 +78,7 @@ internal class ContextOptions<T> where T : class, new()
     }
 
     public ContextOptions(EntityActions EntityAction, Action<ContextOptions<T>> SetOptions)
-    {
-        //SaveContext = Context;
-        //UseContextLock = ContextLock != null;
-        //contextLock = ContextLock ?? new object();
-
+    {        
         //SkipProperties = SkipProperties ?? new List<string>();
         if (SetOptions == default)
             throw new DBContextStopException($"The {nameof(SetOptions)} options must be set and cannot be null ");
@@ -94,25 +90,7 @@ internal class ContextOptions<T> where T : class, new()
 
 
         this.EntityAction = EntityAction;
-
-        //switch (EntityAction)
-        //{
-        //    case EntityActions._:
-            
-        //    case EntityActions.Save_Enity:
-        //    case EntityActions.Add_Save_Entity:
-        //    case EntityActions.Update_Save_Entity:
-        //    case EntityActions.Add_Update_Save_Entity:
-        //        if (DatabaseContext == null)
-        //        {
-        //            logger?.LogError($"The {nameof(EntityAction)} shows you are requesting the entity be saved but the {nameof(DatabaseContext)} is missing. please Supply the {nameof(DatabaseContext)} or Change the {nameof(EntityAction)} to a non-Save Action: {String.Join(", ", new[] { EntityActions.Add_Entity, EntityActions.Add_Update_Entity, EntityActions.Add_Update_Entity })} ");
-
-        //            throw new DBContextContinueException($"The {nameof(DatabaseContext)} must be supplied or the context cannot be saved. View Log for More Detail.");
-        //        }
-
-        //        break;
-        //}
-
+        
         if (Model is null)
         {
             logger?.LogError($"The Supplied {Model} of type: {typeof(T).Name} that is being {EntityAction} is null or missing.");
@@ -170,70 +148,12 @@ internal class ContextOptions<T> where T : class, new()
     /// Currently: False if Update only without Update Fields.
     /// </summary>
     public bool IsValid { get; private set; } = true;
-
-    /*
-    /// <summary>
-    /// Checks to make sure the option model is valid: Throws error is not
-    /// </summary>    
-    private void isValid()
-    {
-        switch (EntityAction)
-        {
-            case EntityActions._:
-                throw new ArgumentException("You need to Choose an Entity Action");
-            //case EntityActions.Add:
-            //    break;
-            //case EntityActions.Update_Entity:
-            //    break;
-            //case EntityActions.AddUpdate:
-            //    break;
-            case EntityActions.Save_Enity:
-            case EntityActions.Add_Save_Entity:
-            case EntityActions.Update_Save_Entity:
-            case EntityActions.Add_Update_Save_Entity:
-                if (DatabaseContext == null)
-                {
-                    logger?.LogError($"The {nameof(EntityAction)} shows you are requesting the entity be saved but the {nameof(DatabaseContext)} is missing. please Supply the {nameof(DatabaseContext)} or Change the {nameof(EntityAction)} to a non-Save Action: {String.Join(", ", new[] { EntityActions.Add_Entity, EntityActions.Add_Update_Entity, EntityActions.Add_Update_Entity })} ");
-
-                    throw new ArgumentNullException(nameof(DatabaseContext), $"The {nameof(DatabaseContext)} must be supplied or the context cannot be saved. View Log for More Detail.");
-                }
-
-                break;
-        }
-
-        Check_SearchForUpdateException();
-
-        /*if (SaveContext == default  && SaveEnityAfterUpdate)
-            throw new ArgumentNullException($"The save context is null and the {nameof(SaveEnityAfterUpdate)} flag is set. Unset the flag or include the data context.");
-        //else if (SearchPredicate == default)
-        //    throw new ArgumentNullException("The Search Predicate ");
-        else* /
-
-
-        // Check for Update Actions
-        void Check_SearchForUpdateException()
-        {
-            if ((new[] { EntityActions.Update_Entity, EntityActions.Add_Update_Entity, EntityActions.Update_Save_Entity, EntityActions.Add_Update_Save_Entity }).Contains(EntityAction))
-            {
-                if (SearchPredicate == default)
-                {
-                    logger?.LogError($"The Update Cannot be done because the {nameof(SearchPredicate)} is null or missing.");
-                    throw new ArgumentException($"You need to supply an {nameof(SearchPredicate)} so that the entity that is being updated can be found. ");
-                }
-
-                if (!(UpdateFields?.Count > 0))
-                {
-                    logger?.LogWarning($"You have Choosen an Update Action but did not suplly any {UpdateFields}. No Update can be performed");
-                    IsValid = IsValid && (EntityAction == EntityActions.Update_Entity || EntityAction == EntityActions.Update_Save_Entity);
-                }
-            }
-        }
-    }
-    //*/
+       
 }
 
-
-
+/// <summary>
+/// DB Context Extention Utilities
+/// </summary>
 public static partial class DBContextUtility
 {
 
@@ -243,7 +163,6 @@ public static partial class DBContextUtility
     /// <param name="obj">The pass through object of type T</param>
     /// <param name="isContinueException">True will produce an DBContextContinueException. False will produce an DBContextStopException </param>
     /// <param name="exceptionMessage"></param>
-    /// <returns></returns>
     /// <exception cref="DBContextContinueException"></exception>
     /// <exception cref="DBContextStopException"></exception>
     [return: System.Diagnostics.CodeAnalysis.NotNull]

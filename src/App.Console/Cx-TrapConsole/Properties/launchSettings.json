@@ -12,6 +12,10 @@
     "Cx-TrapConsole-BuildProcess": {
       "commandName": "Project",
       "commandLineArgs": "project build -p"
+    },
+    "Cx-TrapConsole-list": {
+      "commandName": "Project",
+      "commandLineArgs": "project list"
     }
   }
 }

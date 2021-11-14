@@ -12,7 +12,6 @@ internal class BuildProcess : ConsoleBaseProcess
 {
     Content_Path_Structure _contentRoot { get; }
     
-
     public BuildProcess(CxCommandService CxProcess, IConfiguration config, Microsoft.Extensions.Hosting.IHostEnvironment env) : 
         base(CxProcess, config)     
     {   
@@ -28,8 +27,6 @@ internal class BuildProcess : ConsoleBaseProcess
         //};//this._config_TitleLineOptions
 
     }
-
-    //protected override bool isCanceled { get { return base.isCanceled; } set { base.isCanceled = value; } }
 
     [CxConsoleAction("tree", CommandDisplayInfo.tree_action_description, true, CxRegisterTypes.Register)]
     [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.tree_arg_p__Publish_Description, true, false)]
@@ -277,7 +274,7 @@ internal class BuildProcess : ConsoleBaseProcess
             if (!_tree._Branches.TryGetValue(key, out Tree_Branch? item) || item == null)
                 continue;
 
-            if (item?.References.Count > 0)
+            if (item?.References.Count > 0 && item.References.Any(a => a.referenceType == "ProjectReference"))
             {
                 WriteOutput_Service.write_Lines(5, $"{WriteOutput_Service.space(5)}{displayVal($"Cannot Publish", item.Proj_Name, maxValues.max_name)} >> {displayVal("Version", item.Proj_Version, maxValues.max_Version)}; ");//ToDo: >>> {displayVal("Publish", "No", 6)}
                 continue;
@@ -401,7 +398,6 @@ internal class BuildProcess : ConsoleBaseProcess
         return canPublish;
     }
     
-
     /// <summary>
     /// Creates a display point 
     /// </summary>

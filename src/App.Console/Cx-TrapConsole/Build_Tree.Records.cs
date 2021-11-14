@@ -123,6 +123,7 @@ public record Build_Tree
         var Package_Ref = _Branches
             .Where(w => w.Value.References.Count > 0 && w.Value.References.All(a => a.referenceType == Tree_Branch_Referenece.PackageReferenceName));
 
+        //containg projects that coud reference others
         List<Tree_Branch> order = new List<Tree_Branch>();
 
         foreach (var obj in Package_Ref)
@@ -153,7 +154,11 @@ public record Build_Tree
 #pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
 
             //Get the max index to figure out where to upload
-            var idx = order.Where(o => allRefName.Contains(o.Proj_Name)).Select((v, i) => i).Max();
+
+            int idx = 0;
+            if (order.Where(o => allRefName.Contains(o.Proj_Name)).Select((v, i) => i).Count() > 0)
+                throw new NotImplementedException("Sorr first time needs to be vairified");
+                //idx = order.Where(o => allRefName.Contains(o.Proj_Name)).Select((v, i) => i).Max();
 
             if (idx <= 0)
                 order.Add(obj.Value);
