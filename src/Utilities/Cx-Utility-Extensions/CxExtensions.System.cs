@@ -45,7 +45,7 @@ public static partial class CxExtensions //_System
     /// <param name="obj">the object that is returned if not null</param>
     /// <param name="optionalexception">an optional Exception to return if the object is null. General ArgumentNullException returned if not supplied with a optionalexception</param>
     [return: NotNull]
-    public static T ErrorIfNull<T>(this T? obj, Exception? optionalexception = null) => obj ?? throw (optionalexception ?? new ArgumentNullException());
+    public static T ErrorIfNull<T>([NotNull]this T? obj, Exception? optionalexception = null) => obj ?? throw (optionalexception ?? new ArgumentNullException());
 
     /// <summary>
     /// Will produce a list of indexs of where values are stored
