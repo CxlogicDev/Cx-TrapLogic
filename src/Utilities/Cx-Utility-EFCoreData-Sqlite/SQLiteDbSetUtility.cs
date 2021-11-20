@@ -63,7 +63,6 @@ public static class SQLiteDbSetUtility
         if (_record.isNull() || !options.Can_Update || !typeof(Entity).GetProperties().Any(a => options.Update_Fields.ErrorIfNull().Contains(a.Name)))
            return (_record, false);
         
-
         try
         {
             var ChangeProps = options.Model
@@ -112,45 +111,64 @@ public static class SQLiteDbSetUtility
 
         List<string> UdProps = new List<string>(UpdateProps);
 
-        foreach (var item in UdProps)
-            hasUpdates = hasUpdates || _setProp(item);
+        foreach (var prop_Name in UdProps)
+        {
+            if (_setProp(prop_Name, model, _record))
+            {
+                System.Reflection.PropertyInfo? myProp = typeof(T).GetType().GetProperty(prop_Name);
+
+                if (myProp.isNotNull())
+                {
+                    hasUpdates = true;
+
+                    myProp.SetValue(_record, myProp.GetValue(model));
+
+                    entry.Property(prop_Name).IsModified = true;
+                }
+            }
+        }
         
         if (hasUpdates)
         {
-            foreach (var item in EditDateAttributes)
+            foreach (var myProp in EditDateAttributes)
             {
                 //Set the model edit date to update in the system on any update to other properties
-                item.SetValue(model, DateTime.UtcNow);
+                myProp.SetValue(_record, DateTime.UtcNow);
 
-                //Run the property update
-                _setProp(item.Name);
+                entry.Property(myProp.Name).IsModified = true;
             }
         }
 
         //Sets the property to update with ud value
-        bool _setProp(string item)
+        bool _setProp(string prop_Name, T i_model, T i_record)
         {
             bool IsModified = false;
 
             try
             {
-                var myProp = _record.GetType().GetProperty(item);
+                System.Reflection.PropertyInfo? myProp = typeof(T).GetType().GetProperty(prop_Name);
 
-                if (myProp == default)
+                if (myProp is null)
                     return false;
 
-                if (myProp.GetValue(model) is null || myProp.GetValue(_record) is null)
-                    IsModified = !(myProp.GetValue(model) is null && myProp.GetValue(_record) is null);
+                var t_model = myProp.GetValue(i_model);
+                var t_record = myProp.GetValue(i_record);
+
+                if (t_model is null || t_record is null)
+                    IsModified = !(myProp.GetValue(i_model) is null && myProp.GetValue(i_record) is null);
                 else
-                    IsModified = !myProp.GetValue(model).Equals(myProp.GetValue(_record));
-
-                myProp.SetValue(_record, myProp.GetValue(model));
-
-                entry.Property(item).IsModified = IsModified;
+                    IsModified = !t_model.Equals(t_record);
             }
             catch (Exception Ex)
             {
+                /*
+                  if (options._ILogger == null)
+                    Console.WriteLine(Ex);
+                  else
+                    options._ILogger.LogError(Ex, Ex.Message);                
+                 */
 
+                Console.WriteLine(Ex.Message);
             }
 
             return IsModified;
