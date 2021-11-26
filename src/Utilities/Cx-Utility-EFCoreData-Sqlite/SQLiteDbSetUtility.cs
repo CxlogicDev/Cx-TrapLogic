@@ -109,7 +109,7 @@ public static class SQLiteDbSetUtility
             .Where(w => w.GetCustomAttributes(typeof(UpdateDateOnChangeAttribute), true).Length > 0)
             .ToArray();
 
-        List<string> UdProps = new List<string>(UpdateProps);
+        List<string> UdProps = new (UpdateProps);
 
         foreach (var prop_Name in UdProps)
         {
@@ -217,7 +217,7 @@ public record SqliteEntityOptions<Entity> where Entity : class, new()
     /// <summary>
     /// Generates the Properites that need to be skipped 
     /// </summary>
-    internal string[] skip_fields() => !Can_Update ? new string[0] : Model.GetType()
+    internal string[] skip_fields() => !Can_Update ? Array.Empty<string>() : Model.GetType()
                     .GetProperties()
                     .Where(w => !Update_Fields.Any(a => a.Equals(w.Name, StringComparison.CurrentCultureIgnoreCase)))
                     .Select(s => s.Name)

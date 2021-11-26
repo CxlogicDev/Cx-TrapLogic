@@ -93,7 +93,8 @@ internal class ContextOptions<T> where T : class, new()
         
         if (Model is null)
         {
-            logger?.LogError($"The Supplied {Model} of type: {typeof(T).Name} that is being {EntityAction} is null or missing.");
+            string log_Message = $"The Supplied Model of type: {typeof(T).Name} that is being {EntityAction} is null or missing.";
+            logger?.LogError(message: log_Message);
             throw new DBContextStopException($"{nameof(ContextOptions<T>)}.{nameof(Model)} cannot be null!!!!");
         }
 
@@ -101,13 +102,16 @@ internal class ContextOptions<T> where T : class, new()
         {
             if (SearchPredicate == default)
             {
-                logger?.LogError($"The Update Cannot be done because the {nameof(SearchPredicate)} is null or missing.");
-                throw new DBContextContinueException($"You need to supply an {nameof(SearchPredicate)} so that the entity that is being updated can be found. ");
+                string log_Message = $"The Update Cannot be done because the {nameof(SearchPredicate)} is null or missing.";
+                logger?.LogError(message: log_Message);
+                log_Message = $"You need to supply an {nameof(SearchPredicate)} so that the entity that is being updated can be found. ";
+                throw new DBContextContinueException(log_Message);
             }
 
             if (!(UpdateFields?.Count > 0))
             {
-                logger?.LogWarning($"You have Choosen an Update Action but did not suplly any {UpdateFields}. No Update can be performed");
+                string log_Message = $"You have Choosen an Update Action but did not suplly any UpdateFields. No Update can be performed";
+                logger?.LogWarning(message: log_Message);
                 IsValid = IsValid && (EntityAction == EntityActions.Update_Entity /*|| EntityAction == EntityActions.Update_Save_Entity*/);
             }
         }

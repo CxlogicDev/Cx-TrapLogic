@@ -89,7 +89,7 @@ public static partial class DBContextUtility
         where T : class, new()
     {        
         T? record = default;
-        ContextOptions<T> Options = new ContextOptions<T>(EntityActions.Update_Entity, SetOptions);
+        ContextOptions<T> Options = new (EntityActions.Update_Entity, SetOptions);
 
         //Return if an update cannot be performed
         if (Options.UpdateFields.Count  <= 0 || !typeof(T).GetProperties().Any(a => Options.UpdateFields.Contains(a.Name)))
@@ -139,7 +139,7 @@ public static partial class DBContextUtility
         }
         catch (Exception Ex)
         {
-            Options.logger?.LogError(Ex, Ex.Message);
+            Options.logger?.LogError(Ex, message: Ex.Message);
 
             throw;
         }

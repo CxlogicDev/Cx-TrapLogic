@@ -76,32 +76,31 @@ public static partial class DBContextUtility
         if (direction == System.Data.ParameterDirection.Input || direction == System.Data.ParameterDirection.InputOutput)
             param.Value = paramValue;
         else if (direction == System.Data.ParameterDirection.Output)
-            param.DbType = Direction(paramValue);
+            param.DbType = DbValueTypeSelection(paramValue);
         cmd.Parameters.Add(param);
         return cmd;
     }
 
-    private static System.Data.DbType Direction(object obj)
+    /// <summary>
+    /// Chnage the object to the value type
+    /// </summary>
+    /// <param name="obj">The object to decide the database value type</param>    
+    private static DbType DbValueTypeSelection(object obj) => obj switch
     {
-        switch (obj)
-        {
 
-            case int i: return System.Data.DbType.Int32;
-            case long l: return System.Data.DbType.Int64;
-            case short sh: return System.Data.DbType.Int16;
-            case UInt16 u16: return System.Data.DbType.UInt16;
-            case UInt32 u32: return System.Data.DbType.UInt32;
-            case UInt64 u64: return System.Data.DbType.UInt64;
-            case byte bt: return System.Data.DbType.Byte;
-            case byte[] ba: return System.Data.DbType.Binary;
-            case DateTimeOffset os: return System.Data.DbType.DateTime2;
-            case DateTime d: return System.Data.DbType.DateTime;
-            case bool b: return System.Data.DbType.Boolean;
-            case string s:
-            default: return System.Data.DbType.String;
-        }
-
-    }
+        int => DbType.Int32,
+        long => DbType.Int64,
+        short => DbType.Int16,
+        ushort => DbType.UInt16,
+        uint => DbType.UInt32,
+        ulong => DbType.UInt64,
+        byte => DbType.Byte,
+        byte[] => DbType.Binary,
+        DateTimeOffset => DbType.DateTime2,
+        DateTime => DbType.DateTime,
+        bool => DbType.Boolean,
+        _ => DbType.String,
+    };
 
     /// <summary>
     /// Adds a OUTPUT Param to the Command Ex: @param = .WithSqlParam("param", paramValue)
@@ -137,7 +136,7 @@ public static partial class DBContextUtility
 
         var param = cmd.CreateParameter();
         param.ParameterName = $"@{paramName.TrimStart('@')}";
-        param.DbType = Direction(paramValue);
+        param.DbType = DbValueTypeSelection(paramValue);
         param.Direction = System.Data.ParameterDirection.Output;
         cmd.Parameters.Add(param);
 
@@ -205,7 +204,13 @@ public static partial class DBContextUtility
                 ct++;
                 try
                 {
-                    var val = dr.GetValue(colMapping[prop.Name.ToLower()].ColumnOrdinal.Value);
+                    var mapping_v = colMapping[prop.Name.ToLower()];
+
+                    if (mapping_v.isNull())
+                        continue;
+
+                    var val = dr.GetValue(mapping_v.ColumnOrdinal.ErrorIfNull().Value);
+
                     prop.SetValue(obj, val == DBNull.Value ? null : val);
                 }
                 catch (Exception Ex)
@@ -213,8 +218,8 @@ public static partial class DBContextUtility
                     Console.WriteLine(Ex.ToString());
                 }
             }
-            objList.Add(obj);
 
+            objList.Add(obj);
         }
 
         dr.Close();
@@ -223,7 +228,7 @@ public static partial class DBContextUtility
     }
 
     /// <summary>
-    /// Builds a simple object list
+    /// Builds a simple object list nulls will be removed. Simple types are string, bool, int, decimal, ....
     /// </summary>
     /// <typeparam name="T">The type of object to process</typeparam>
     /// <param name="dr">The datareader used to read the rows</param>
@@ -231,9 +236,8 @@ public static partial class DBContextUtility
     private static IList<T> MapToSimpleList<T>(this DbDataReader dr)
     {
         var objList = new List<T>();
+
         var props = typeof(T).GetRuntimeProperties();
-
-
 
         KeyValuePair<string, DbColumn> map = default;
 
@@ -246,22 +250,20 @@ public static partial class DBContextUtility
                 var colMapping = dr.GetColumnSchema().ToDictionary(key => key.ColumnName.ToLower());
 
                 if (colMapping.Count > 1)
-                {
-                    throw new FormatException("The Return is not a simple type. Simple types are string, bool, int, decimal, ....");
-                }
+                    throw new FormatException("The Return is not a simple type. Simple types are string, bool, int, decimal, ....");                
 
                 isFirst = false;
+
                 map = colMapping.FirstOrDefault();
             }
 
-            //if(map.isNull() || map.Value.isNull() || map.Value.ColumnOrdinal.isNull() || map.Value.ColumnOrdinal.Value.isNull())
-            //    return new List<T>();
+            if (map.Value?.ColumnOrdinal == null)
+                continue;
 
-            var val = dr.GetValue(map.Value.ColumnOrdinal.Value);
+            object? val = dr.GetValue(map.Value.ColumnOrdinal.Value);
 
-            T obj = (T)(val == DBNull.Value ? null : val);
-            
-            objList.Add(obj);
+            if(val.isNotNull())               
+                objList.Add((T)val);
         }
 
         dr.Close();
@@ -274,14 +276,14 @@ public static partial class DBContextUtility
     /// </summary>
     /// <typeparam name="T">The object for the list</typeparam>        
     /// <returns>A list of mapped objects</returns>
-    public static IList<T> ExecStoredProc<T>(this DbCommand command) => command.ExecCommand<T>();
+    public static IList<T> Exec_StoredProc<T>(this DbCommand command) => command.Exec_Command<T>();
 
     /// <summary>
     /// Build the Object List after running the Command
     /// </summary>
     /// <typeparam name="T">The object for the list</typeparam>        
     /// <returns>A list of mapped objects</returns>
-    public static IList<T> ExecCommand<T>(this DbCommand command)
+    public static IList<T> Exec_Command<T>(this DbCommand command)
     {
         using (command)
         {
@@ -306,7 +308,7 @@ public static partial class DBContextUtility
     /// </summary>
     /// <typeparam name="T">The object for the list</typeparam>        
     /// <returns>A list of mapped Simple Objects</returns>
-    public static IList<T> ExecuteCommandSimple<T>(this DbCommand command)
+    public static IList<T> Exec_CommandSimple<T>(this DbCommand command)
     {
         using (command)
         {
@@ -328,7 +330,7 @@ public static partial class DBContextUtility
     /// Executes the The Command with no Return assumed
     /// </summary>
     /// <returns>The number of rows effeceted</returns>
-    public static int ExecStoreProc(this DbCommand command)
+    public static int Exec_StoreProc(this DbCommand command)
     {
         int ct = 0;
         using (command)
@@ -353,7 +355,7 @@ public static partial class DBContextUtility
     /// Executes the The Store procedure with no Return assumed
     /// </summary>
     /// <returns>The number of rows effeceted</returns>
-    public static int ExecCommand(this DbCommand command)
+    public static int Exec_Command(this DbCommand command)
     {
         int ct = 0;
         using (command)
@@ -375,20 +377,24 @@ public static partial class DBContextUtility
     }
 
     /// <summary>
-    /// Will save changes in the tracked entries.
+    /// Will save If Change Tracker has changes for tracked entries. 
     /// </summary>
     /// <param name="ctx">The Context used</param>
-    /// <param name="CleanChangeTracker">Tell The save process to clean The change Tracker</param>
+    /// <param name="CleanChangeTracker">Tell The save process to clean The Change Tracker after saved. Errors will Automatically Clean Tracker</param>
+    /// <returns> -1: No Changes in tracker; else the number of changed records. </returns>
     public static async Task<int> SaveChangesCleanTrackerAsync(this DbContext ctx, bool CleanChangeTracker = false)
     {
-        int ct = 0;
+        int ct;
+
         try
         {
             if (ctx == null)
-                throw new ArgumentNullException("The DbContext is null and should not be.");
+                throw new ArgumentNullException(nameof(ctx));
 
-            if (ctx.ChangeTracker.HasChanges())
-                ct = await ctx.SaveChangesAsync();
+            if (!ctx.ChangeTracker.HasChanges())
+                return -1;
+
+            ct = await ctx.SaveChangesAsync();
 
             if (CleanChangeTracker)
                 ctx.CleanChangeTracker();
@@ -410,7 +416,7 @@ public static partial class DBContextUtility
     public static void CleanChangeTracker(this DbContext ctx)
     {
         if (ctx == null)
-            throw new ArgumentNullException("The DbContext is null and should not be.");
+            throw new ArgumentNullException(nameof(ctx));
 
         ctx.ChangeTracker.Clear();
     }

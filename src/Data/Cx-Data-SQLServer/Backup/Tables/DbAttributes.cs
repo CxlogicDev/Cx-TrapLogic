@@ -11,6 +11,7 @@ namespace CxData.SQLServer.Backup
         public int id { get; set; }
         public bool active { get; set; }
 
+        [System.Diagnostics.CodeAnalysis.AllowNull]
         public string identifier { get; set; }
         public string? field1 { get; set; }
         public string? field2 { get; set; }
