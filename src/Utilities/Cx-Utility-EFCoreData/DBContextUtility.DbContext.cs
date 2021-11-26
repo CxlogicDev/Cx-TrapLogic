@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data;
 
 namespace CxUtility.EFCoreData;
 
@@ -106,16 +107,16 @@ public static partial class DBContextUtility
     /// Adds a OUTPUT Param to the Command Ex: @param = .WithSqlParam("param", paramValue)
     /// </summary>        
     /// <param name="paramName">The name of the parameter to add to the command</param>
-    /// <param name="paramValue">The value object to add to the command</param>
+    /// <param name="paramValueType">The value Type of the output object to add to the command</param>
     /// <returns>The Command that was build for the next pipe line process</returns>
-    public static DbCommand WithSqlOutputParam(this DbCommand cmd, string paramName, System.Data.DbType paramValue)
+    public static DbCommand WithSqlOutputParam(this DbCommand cmd, string paramName, System.Data.DbType paramValueType)
     {
         if (string.IsNullOrEmpty(cmd.CommandText))
             throw new InvalidOperationException("Call BuildCommand, BuildScriptCommand, or BuildStoreProcedureCommand before using this method");
 
         var param = cmd.CreateParameter();
         param.ParameterName = $"@{paramName.TrimStart('@')}";
-        param.DbType = paramValue;
+        param.DbType = paramValueType;
 
         param.Direction = System.Data.ParameterDirection.Output;
         cmd.Parameters.Add(param);
@@ -123,6 +124,12 @@ public static partial class DBContextUtility
         return cmd;
     }
 
+    /// <summary>
+    /// Adds a OUTPUT Param to the Command Ex: @param = .WithSqlParam("param", paramValue)
+    /// </summary>    
+    /// <param name="paramName">The name of the parameter to add to the command</param>
+    /// <param name="paramValue">The value object to add to the command</param>
+    /// <exception cref="InvalidOperationException">The command is invalid</exception>
     public static DbCommand WithSqlOutputParam(this DbCommand cmd, string paramName, object paramValue)
     {
         if (string.IsNullOrEmpty(cmd.CommandText))
@@ -137,6 +144,8 @@ public static partial class DBContextUtility
         return cmd;
     }
 
+    /*
+     * Marked for Deletion
     public static DbCommand WithSqlOutputParam(this DbCommand cmd, string paramName, object paramValue, out DbParameter param)
     {
         if (string.IsNullOrEmpty(cmd.CommandText))
@@ -149,22 +158,6 @@ public static partial class DBContextUtility
         cmd.Parameters.Add(param);
 
         return cmd;
-    }
-
-    /// <summary>
-    /// Gets a param from the command
-    /// </summary>
-    /// <param name="cmd"></param>
-    /// <param name="paramName"></param>
-    /// <returns></returns>
-    public static DbParameter OutputParam(this DbCommand cmd, string paramName)
-    {
-        if (string.IsNullOrEmpty(cmd.CommandText))
-            throw new InvalidOperationException("Call BuildCommand, BuildScriptCommand, or BuildStoreProcedureCommand before using this method");
-
-        var param = cmd.Parameters[$"@{paramName.TrimStart('@')}"];
-
-        return param;
     }
 
     /// <summary>
@@ -185,6 +178,8 @@ public static partial class DBContextUtility
 
         return param;
     }
+
+    */
 
     /// <summary>
     /// Private Mapping a row to a object
@@ -227,6 +222,12 @@ public static partial class DBContextUtility
         return objList;
     }
 
+    /// <summary>
+    /// Builds a simple object list
+    /// </summary>
+    /// <typeparam name="T">The type of object to process</typeparam>
+    /// <param name="dr">The datareader used to read the rows</param>
+    /// <exception cref="FormatException"></exception>
     private static IList<T> MapToSimpleList<T>(this DbDataReader dr)
     {
         var objList = new List<T>();
@@ -253,8 +254,13 @@ public static partial class DBContextUtility
                 map = colMapping.FirstOrDefault();
             }
 
+            //if(map.isNull() || map.Value.isNull() || map.Value.ColumnOrdinal.isNull() || map.Value.ColumnOrdinal.Value.isNull())
+            //    return new List<T>();
+
             var val = dr.GetValue(map.Value.ColumnOrdinal.Value);
+
             T obj = (T)(val == DBNull.Value ? null : val);
+            
             objList.Add(obj);
         }
 
@@ -268,25 +274,25 @@ public static partial class DBContextUtility
     /// </summary>
     /// <typeparam name="T">The object for the list</typeparam>        
     /// <returns>A list of mapped objects</returns>
-    public static IList<T> ExecuteStoredProc<T>(this DbCommand command) => command.ExecuteCommand<T>();
+    public static IList<T> ExecStoredProc<T>(this DbCommand command) => command.ExecCommand<T>();
 
     /// <summary>
     /// Build the Object List after running the Command
     /// </summary>
     /// <typeparam name="T">The object for the list</typeparam>        
     /// <returns>A list of mapped objects</returns>
-    public static IList<T> ExecuteCommand<T>(this DbCommand command)
+    public static IList<T> ExecCommand<T>(this DbCommand command)
     {
         using (command)
         {
-            if (command.Connection.State == System.Data.ConnectionState.Closed)
+            if (command.Connection.ErrorIfNull(new DataException("The connection is null")).State == System.Data.ConnectionState.Closed)
                 command.Connection.Open();
+
             try
             {
-                using (var reader = command.ExecuteReader())
-                {
-                    return reader.HasRows ? reader.MapToList<T>() : new List<T>();
-                }
+                using var reader = command.ExecuteReader();
+
+                return reader.HasRows ? reader.MapToList<T>() : new List<T>();
             }
             finally
             {
@@ -304,15 +310,12 @@ public static partial class DBContextUtility
     {
         using (command)
         {
-            if (command.Connection.State == System.Data.ConnectionState.Closed)
+            if (command.Connection.ErrorIfNull(new DataException("The connection is null")).State == System.Data.ConnectionState.Closed)
                 command.Connection.Open();
             try
             {
-                using (var reader = command.ExecuteReader())
-                {
-
-                    return reader.HasRows ? reader.MapToSimpleList<T>() : new List<T>();
-                }
+                using var reader = command.ExecuteReader();
+                return reader.HasRows ? reader.MapToSimpleList<T>() : new List<T>();                
             }
             finally
             {
@@ -330,7 +333,7 @@ public static partial class DBContextUtility
         int ct = 0;
         using (command)
         {
-            if (command.Connection.State == System.Data.ConnectionState.Closed)
+            if (command.Connection.ErrorIfNull(new DataException("The connection is null")).State == ConnectionState.Closed)
                 command.Connection.Open();
 
             try
@@ -355,7 +358,7 @@ public static partial class DBContextUtility
         int ct = 0;
         using (command)
         {
-            if (command.Connection.State == System.Data.ConnectionState.Closed)
+            if (command.Connection.ErrorIfNull(new DataException("The connection is null")).State == System.Data.ConnectionState.Closed)
                 command.Connection.Open();
 
             try
