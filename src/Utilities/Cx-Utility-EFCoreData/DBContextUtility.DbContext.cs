@@ -181,97 +181,6 @@ public static partial class DBContextUtility
     */
 
     /// <summary>
-    /// Private Mapping a row to a object
-    /// </summary>
-    /// <typeparam name="T">The object for the list</typeparam>
-    /// <returns>A list of mapped objects</returns>
-    private static IList<T> MapToList<T>(this DbDataReader dr)
-    {
-        var objList = new List<T>();
-        var props = typeof(T).GetRuntimeProperties();
-
-        while (dr.Read())
-        {
-            T obj = Activator.CreateInstance<T>();
-            int ct = 0;
-
-            var colMapping = dr.GetColumnSchema()
-            .Where(x => props.Any(y => y.Name.Equals(x.ColumnName, StringComparison.CurrentCultureIgnoreCase)))
-            .ToDictionary(key => key.ColumnName.ToLower());
-
-            foreach (var prop in props)
-            {
-                ct++;
-                try
-                {
-                    var mapping_v = colMapping[prop.Name.ToLower()];
-
-                    if (mapping_v.isNull())
-                        continue;
-
-                    var val = dr.GetValue(mapping_v.ColumnOrdinal.ErrorIfNull().Value);
-
-                    prop.SetValue(obj, val == DBNull.Value ? null : val);
-                }
-                catch (Exception Ex)
-                {
-                    Console.WriteLine(Ex.ToString());
-                }
-            }
-
-            objList.Add(obj);
-        }
-
-        dr.Close();
-
-        return objList;
-    }
-
-    /// <summary>
-    /// Builds a simple object list nulls will be removed. Simple types are string, bool, int, decimal, ....
-    /// </summary>
-    /// <typeparam name="T">The type of object to process</typeparam>
-    /// <param name="dr">The datareader used to read the rows</param>
-    /// <exception cref="FormatException"></exception>
-    private static IList<T> MapToSimpleList<T>(this DbDataReader dr)
-    {
-        var objList = new List<T>();
-
-        var props = typeof(T).GetRuntimeProperties();
-
-        KeyValuePair<string, DbColumn> map = default;
-
-        bool isFirst = true;
-
-        while (dr.Read())
-        {
-            if (isFirst)
-            {
-                var colMapping = dr.GetColumnSchema().ToDictionary(key => key.ColumnName.ToLower());
-
-                if (colMapping.Count > 1)
-                    throw new FormatException("The Return is not a simple type. Simple types are string, bool, int, decimal, ....");                
-
-                isFirst = false;
-
-                map = colMapping.FirstOrDefault();
-            }
-
-            if (map.Value?.ColumnOrdinal == null)
-                continue;
-
-            object? val = dr.GetValue(map.Value.ColumnOrdinal.Value);
-
-            if(val.isNotNull())               
-                objList.Add((T)val);
-        }
-
-        dr.Close();
-
-        return objList;
-    }
-
-    /// <summary>
     /// Build the Object List after running the StoreProcedure
     /// </summary>
     /// <typeparam name="T">The object for the list</typeparam>        
@@ -419,5 +328,96 @@ public static partial class DBContextUtility
             throw new ArgumentNullException(nameof(ctx));
 
         ctx.ChangeTracker.Clear();
+    }
+
+    /// <summary>
+    /// Private Mapping a row to a object
+    /// </summary>
+    /// <typeparam name="T">The object for the list</typeparam>
+    /// <returns>A list of mapped objects</returns>
+    private static IList<T> MapToList<T>(this DbDataReader dr)
+    {
+        var objList = new List<T>();
+        var props = typeof(T).GetRuntimeProperties();
+
+        while (dr.Read())
+        {
+            T obj = Activator.CreateInstance<T>();
+            int ct = 0;
+
+            var colMapping = dr.GetColumnSchema()
+            .Where(x => props.Any(y => y.Name.Equals(x.ColumnName, StringComparison.CurrentCultureIgnoreCase)))
+            .ToDictionary(key => key.ColumnName.ToLower());
+
+            foreach (var prop in props)
+            {
+                ct++;
+                try
+                {
+                    var mapping_v = colMapping[prop.Name.ToLower()];
+
+                    if (mapping_v.isNull())
+                        continue;
+
+                    var val = dr.GetValue(mapping_v.ColumnOrdinal.ErrorIfNull().Value);
+
+                    prop.SetValue(obj, val == DBNull.Value ? null : val);
+                }
+                catch (Exception Ex)
+                {
+                    Console.WriteLine(Ex.ToString());
+                }
+            }
+
+            objList.Add(obj);
+        }
+
+        dr.Close();
+
+        return objList;
+    }
+
+    /// <summary>
+    /// Builds a simple object list nulls will be removed. Simple types are string, bool, int, decimal, ....
+    /// </summary>
+    /// <typeparam name="T">The type of object to process</typeparam>
+    /// <param name="dr">The datareader used to read the rows</param>
+    /// <exception cref="FormatException"></exception>
+    private static IList<T> MapToSimpleList<T>(this DbDataReader dr)
+    {
+        var objList = new List<T>();
+
+        var props = typeof(T).GetRuntimeProperties();
+
+        KeyValuePair<string, DbColumn> map = default;
+
+        bool isFirst = true;
+
+        while (dr.Read())
+        {
+            if (isFirst)
+            {
+                var colMapping = dr.GetColumnSchema().ToDictionary(key => key.ColumnName.ToLower());
+
+                if (colMapping.Count > 1)
+                    throw new FormatException("The Return is not a simple type. Simple types are string, bool, int, decimal, ....");
+
+                isFirst = false;
+
+                map = colMapping.FirstOrDefault();
+            }
+
+            if (map.Value?.ColumnOrdinal == null)
+                continue;
+
+            object? val = dr.GetValue(map.Value.ColumnOrdinal.Value);
+
+            if (val.isNotNull())
+                objList.Add((T)val);
+        }
+
+        dr.Close();
+
+        return objList;
     }
 }

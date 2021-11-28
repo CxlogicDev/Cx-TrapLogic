@@ -13,8 +13,8 @@ public static class SQLiteDbSetUtility
     /// <typeparam name="Entity">The BBSet entity to process</typeparam>
     /// <param name="entityObj">The DBSet object to process</param>
     /// <param name="optionsActions">The options that can be that apply to the model</param>
-    public static Task<Entity?> AddUpdateSqliteEntity_Async<Entity>(this DbSet<Entity> entityObj, Action<SqliteEntityOptions<Entity>> optionsActions)
-        where Entity : class, new() => entityObj.AddUpdateSqliteEntity_Async(new SqliteEntityOptions<Entity>(optionsActions));
+    public static Task<Entity?> AddUpdate_SqliteEntity_Async<Entity>(this DbSet<Entity> entityObj, Action<SqliteEntityOptions<Entity>> optionsActions)
+        where Entity : class, new() => entityObj.AddUpdate_SqliteEntity_Async(new SqliteEntityOptions<Entity>(optionsActions));
 
     /// <summary>
     /// Loads a new or updated entity into the context. This will not save the context Only add to Change tracker.
@@ -22,12 +22,12 @@ public static class SQLiteDbSetUtility
     /// <typeparam name="Entity">The BBSet entity to process</typeparam>
     /// <param name="entityObj">The DBSet object to process</param>
     /// <param name="options">The options that can be that apply to the model</param>
-    public static async Task<Entity?> AddUpdateSqliteEntity_Async<Entity>(this DbSet<Entity> entityObj, SqliteEntityOptions<Entity> options)
+    public static async Task<Entity?> AddUpdate_SqliteEntity_Async<Entity>(this DbSet<Entity> entityObj, SqliteEntityOptions<Entity> options)
         where Entity : class, new()
     {
 
         //Not a new 
-        var (result, _) = await entityObj.UpdateSqliteEntityAsync(options);//_Model, SearchPredicate, UpdateFields
+        var (result, _) = await entityObj.Update_SqliteEntity_Async(options);//_Model, SearchPredicate, UpdateFields
 
         //Need to do a Add 
         if (result is null)
@@ -45,8 +45,8 @@ public static class SQLiteDbSetUtility
     /// <typeparam name="Entity">The BBSet entity to process</typeparam>
     /// <param name="entityObj">The DBSet object to process</param>
     /// <param name="optionsActions">The options that can be that apply to the model</param>
-    public static Task<(Entity? dbEntity, bool can_Update)> UpdateSqliteEntityAsync<Entity>(this DbSet<Entity> entityObj, Action<SqliteEntityOptions<Entity>> optionsActions)
-       where Entity : class, new() => entityObj.UpdateSqliteEntityAsync(new SqliteEntityOptions<Entity>(optionsActions));
+    public static Task<(Entity? dbEntity, bool can_Update)> Update_SqliteEntity_Async<Entity>(this DbSet<Entity> entityObj, Action<SqliteEntityOptions<Entity>> optionsActions)
+       where Entity : class, new() => entityObj.Update_SqliteEntity_Async(new SqliteEntityOptions<Entity>(optionsActions));
 
     /// <summary>
     /// updated entity into the context. This will not save the context Only add to Change tracker.
@@ -54,7 +54,7 @@ public static class SQLiteDbSetUtility
     /// <typeparam name="Entity">The BBSet entity to process</typeparam>
     /// <param name="entityObj">The DBSet object to process</param>
     /// <param name="options">The options that can be that apply to the model</param>
-    public static async Task<(Entity? dbEntity, bool can_Update)> UpdateSqliteEntityAsync<Entity>(this DbSet<Entity> entityObj, SqliteEntityOptions<Entity> options)
+    public static async Task<(Entity? dbEntity, bool can_Update)> Update_SqliteEntity_Async<Entity>(this DbSet<Entity> entityObj, SqliteEntityOptions<Entity> options)
         where Entity : class, new()
     {
         Entity? _record = options.Search_Predicate.isNull()? default : (await entityObj.FirstOrDefaultAsync(options.Search_Predicate));

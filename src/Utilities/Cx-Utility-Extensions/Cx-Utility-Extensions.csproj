@@ -4,7 +4,7 @@
     <RootNamespace>CxUtility</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.8</Version>
+    <Version>1.0.0.9</Version>
     <PackageId>Cx-Utility-Extensions</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>

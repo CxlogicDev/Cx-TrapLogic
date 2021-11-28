@@ -71,12 +71,13 @@ public static partial class DBContextUtility
     /// <param name="UpdateFields">The Fields that are allowed to be updated.</param>
     /// <returns>The Record that being updated.</returns>
     public static async Task<T?> UpdateEntity<T>(this DbSet<T> entityObj, T Itm, Expression<Func<T, bool>> SearchPredicate, params string[] UpdateFields) 
-        where T : class, new() => await entityObj.UpdateEntityAsync(o =>
-        {
-            o.Model = Itm;
-            o.UpdateFields = UpdateFields.ToList();
-            o.SearchPredicate = SearchPredicate;
-        });
+        where T : class, new() => 
+            await entityObj.UpdateEntityAsync(o =>
+            {
+                o.Model = Itm;
+                o.UpdateFields = UpdateFields.ToList();
+                o.SearchPredicate = SearchPredicate;
+            });
 
     /// <summary>
     /// Runs a Async Call that updates only on the context
