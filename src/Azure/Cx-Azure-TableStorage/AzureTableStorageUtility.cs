@@ -6,173 +6,190 @@ using Azure.Data.Tables.Models;
 
 namespace CxAzure.TableStorage;
 
+
 public static class TableStorageUtilityExtentions
 {
     /// <summary>
     /// Creates a New Table in azure table storage
     /// </summary>
-    /// <param name="_table">The Table Access</param>
+    /// <param name="tableAccess">The Table Access</param>
     /// <param name="tableName">create a different table then the TableAccess.tableName</param>
-    public static TableAccess CreateTable(this TableAccess _table, string? tableName = null)
+    public static async Task<TableAccess> Create_StorageTable_Async(this TableAccess tableAccess, string? tableName = null, CancellationToken cancellationToken = default)
     {
-        string _tableName = tableName ?? _table.tableName;
-        TableItem table = _table.Client.CreateTableIfNotExists(_tableName);        
-        return _table;
+        string _tableName = tableName ?? tableAccess.tableName;
+        TableItem? table;
+        try
+        {
+             table = await tableAccess.Client.CreateTableIfNotExistsAsync(_tableName, cancellationToken);
+        }
+        catch (Exception Ex)
+        {
+            Console.WriteLine(Ex);
+            throw;
+        }   
+        
+        return tableAccess;
     }
 
     /// <summary>
-    /// 
+    /// Queries for a tables in the list of tables 
     /// </summary>
-    /// <param name="_table"></param>
-    /// <param name="tableName"></param>
-    /// <returns></returns>
-    public static IList<TableItem> StorageTable(this TableAccess _table, string? tableName = null)
+    /// <param name="tableAccess">The Table Access </param>
+    /// <param name="tableName">The Table Name to override in the table access.</param>
+    public static async Task<IList<TableItem>> Query_StorageTables_Async(this TableAccess tableAccess, string? tableName = null, CancellationToken cancellationToken = default)
     {
-        Pageable<TableItem> queryTableResults = _table.Client.Query(filter: $"TableName eq '{tableName}'");
+        AsyncPageable<TableItem> queryTableResults = tableAccess.Client.QueryAsync(filter: $"TableName eq '{tableName ?? tableAccess.tableName}'", cancellationToken: cancellationToken);
 
         //Console.WriteLine("The following are the names of the tables in the query results:");
 
         // Iterate the <see cref="Pageable"> in order to access queried tables.
+        List<TableItem> tableList = new();
 
-        if (queryTableResults.Count() <= 0)
-            return new List<TableItem>();
-        else 
-            return new List<TableItem>(queryTableResults);
+        await foreach (var queryTableResult in queryTableResults)
+            if (queryTableResult != null)
+                tableList.Add(queryTableResult);        
 
-        //List<TableItem> tableList = new List<TableItem>(queryTableResults);
-
-
-
-        //foreach (TableItem table in queryTableResults)
-        //{
-        //    tableList.Add()
-        //    Console.WriteLine(table.Name);
-        //}
-
-        //return tableList;
+        return tableList;
     }
 
     /// <summary>
-    /// 
+    /// Deletes the full Table
     /// </summary>
-    /// <param name="_table"></param>
-    /// <param name="tableName"></param>
-    public static void DeleteTable(this TableAccess _table, string tableName)
+    /// <param name="tableAccess">The table access</param>
+    /// <param name="tableName">The name of the table</param>
+    public static Task Delete_StorageTable_Async(this TableAccess tableAccess, string tableName, CancellationToken cancellationToken = default)
     {
         if(tableName?.Length > 0)
-            _table.Client.DeleteTable(tableName);
-    }
+        {
+            if (!tableName.Equals(tableAccess.tableName))
+                throw new InvalidOperationException($"Only the tableAccess.tableName can be delete and must match the supplied tableName to delete. The TableName: {tableName} does not match the tableAccess.tableName: {tableAccess.tableName}");
 
+                return tableAccess.Client.DeleteTableAsync(tableName, cancellationToken: cancellationToken);
+        }
+
+        return Task.CompletedTask;
+    }
 
     /*Table Entities*/
 
-    //Expression<Func<T, bool>> filter
-    -/* 
-    public static async Task<IEnumerable<Table_Entity>> QueryEntity_Async<Table_Entity>(this TableAccess _table, TableQueryOptions<Table_Entity> options)
-        where Table_Entity : class, ITableEntity, new()
+    /// <summary>
+    /// Queries the storage table by PartitionKey. 
+    /// </summary>
+    /// <typeparam name="Table_Entity">The entity being queried</typeparam>
+    /// <param name="tableAccess">The Table access object</param>
+    /// <param name="PartitionKey">The table partition Key</param>
+    public static async Task<IEnumerable<Table_Entity>> Query_Entity_ByPartionKey_Async<Table_Entity>(this TableAccess tableAccess, string PartitionKey, CancellationToken cancellationToken = default) where Table_Entity : class, ITableEntity, new()
     {
-        var tt = await _table.tableClient.QueryAsync(filter: options.filter, maxPerPage: options.maxPerPage, select: options.return_Fields, cancellationToken: options.cancellationToken);
 
-        tt.
+        AsyncPageable<Table_Entity>? tt = tableAccess.tableClient.QueryAsync<Table_Entity>(filter: (x => x.PartitionKey.Equals(PartitionKey) ), cancellationToken: cancellationToken);
+        List<Table_Entity> Result_Entities = new();
+
+        //write the entity results
+        await foreach (var item in tt.AsPages())
+            Result_Entities.AddRange(item.Values);
+
+        return Result_Entities;
     }
 
-    public static async Task<IEnumerable<Table_Entity>> QueryEntity_Async<Table_Entity>(this TableAccess _table, System.Linq.Expressions.Expression<Func<Table_Entity, bool>> filter, CancellationToken cancellationToken = default(CancellationToken))
-        where Table_Entity : class, ITableEntity, new() => _table.tableClient.QueryAsync(filter: filter, cancellationToken: cancellationToken);
-    //*/
+    /// <summary>
+    /// Queries the storage table by RowKey. 
+    /// </summary>
+    /// <typeparam name="Table_Entity">The entity being queried</typeparam>
+    /// <param name="tableAccess">The Table access object</param>
+    /// <param name="PartitionKey">The table partition Key</param>
+    /// <param name="RowKey">The Row from the partition</param>
+    public static async Task<Table_Entity?> Query_Entity_ByRowKey_Async<Table_Entity>(this TableAccess tableAccess, string PartitionKey, string RowKey, CancellationToken cancellationToken = default) where Table_Entity : class, ITableEntity, new()
+    {
 
+        AsyncPageable<Table_Entity>? tt = tableAccess.tableClient.QueryAsync<Table_Entity>(filter: (x => x.PartitionKey.Equals(PartitionKey) && x.RowKey.Equals(RowKey)), cancellationToken: cancellationToken);
+        List<Table_Entity> Result_Entities = new();
 
-    //        public static async Task<IEnumerable<Table_Entity>> QueryEntity_Async<Table_Entity>(this TableAccess _table, string partitionKey, string rowId) 
-    //        where Table_Entity : ITableEntity
-    //    {
-    //         Pageable<TableEntity> queryResultsFilter = _table.tableClient.Query<TableEntity>(filter: TableFilter.Query_OnRowKey(partitionKey, rowId));
+        //write the entity results
+        await foreach (var item in tt.AsPages())
+            Result_Entities.AddRange(item.Values);
 
+        return Result_Entities.FirstOrDefault();
+    }
 
+    /// <summary>
+    /// Creates a Record in the storage Table will not update!!
+    /// </summary>
+    /// <param name="entity">The Object that is being updated</param>
+    public static async Task<Table_Entity?> Create_Entity_IfNotExists_Async<Table_Entity>(this TableAccess tableAccess, Table_Entity entity, CancellationToken cancellationToken = default) where Table_Entity : class, ITableEntity, new()
+    {
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
 
-    //        /*
+        try
+        {
+            _ = await tableAccess.tableClient.AddEntityAsync(entity, cancellationToken: cancellationToken); 
+        }
+        catch (RequestFailedException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
 
-    //// Iterate the <see cref="Pageable"> to access all queried entities.
-    //foreach (TableEntity qEntity in queryResultsFilter)
-    //{
-    //    Console.WriteLine($"{qEntity.GetString("Product")}: {qEntity.GetDouble("Price")}");
-    //}
+        return await tableAccess.Query_Entity_ByRowKey_Async<Table_Entity>(entity.PartitionKey, entity.RowKey);        
+    }
 
-    //Console.WriteLine($"The query returned {queryResultsFilter.Count()} entities.");
-    //         */
+    /// <summary>
+    /// Add in a new Entity if not in table. Else it will delete old entity and create the new one.
+    /// </summary>
+    /// <typeparam name="Table_Entity">The type of entity being uploaded</typeparam>
+    /// <param name="tableAccess">The table access</param>
+    /// <param name="entity">The Entity to update</param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static async Task<Table_Entity?> Create_Entity_Clean_UpdateIfExists_Async<Table_Entity>(this TableAccess tableAccess, Table_Entity entity, CancellationToken cancellationToken = default) where Table_Entity : class, ITableEntity, new()
+    {
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity));
+        }
 
+        try
+        {
+            _ = tableAccess.tableClient.DeleteEntity(entity.PartitionKey, entity.RowKey, cancellationToken: cancellationToken);
 
+            _ = await tableAccess.tableClient.AddEntityAsync(entity, cancellationToken: cancellationToken);
 
-    //    }
+        }
+        catch (RequestFailedException)
+        {
+            return null;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
 
-    //    /// <summary>
-    //    /// Creates or Updates a Record in the storage Table
-    //    /// </summary>
-    //    /// <param name="entity">The Object that is being updated</param>
-    //    public static async Task<Table_Entity> CreateEntity_IfNotExists_Async<Table_Entity>(this TableAccess tableAccess, Table_Entity entity) where Table_Entity : ITableEntity
-    //    {
-    //        if (entity == null)
-    //        {
-    //            throw new ArgumentNullException(nameof(entity));
-    //        }
+        return await tableAccess.Query_Entity_ByRowKey_Async<Table_Entity>(entity.PartitionKey, entity.RowKey);
+    }
 
-
-
-
-
-    //        var TableOperation = tableAccess.tableClient;
-
-    //        try
-    //        {
-    //            // Create the InsertOrReplace table operation
-    //            TableOperation insertOrMergeOperation = tableAccess.tableClient.InsertOrMerge(entity);
-
-    //            // Execute the operation.
-    //            TableResult result = await table.ExecuteAsync(insertOrMergeOperation);
-    //            Table_Entity insertedEntity = result.Result as Table_Entity;
-
-    //            //if (result.RequestCharge.HasValue)
-    //            //{
-    //            //    Console.WriteLine("Request Charge of InsertOrMerge Operation: " + result.RequestCharge);
-    //            //}
-
-    //            return insertedEntity;
-    //        }
-    //        catch (StorageException e)
-    //        {
-    //            Console.WriteLine(e.Message);
-    //            Console.ReadLine();
-    //            throw;
-    //        }
-    //    }
-
-    //    /// <summary>
-    //    /// Creates or Updates multiple Records in the storage Table
-    //    /// </summary>
-    //    /// <param name="entity">The Objects that are being updated</param>
-    //    public static async Task<IEnumerable<Table_Entity>> post_EntitiesAsync<Table_Entity>(this TableAccess tableAccess, params Table_Entity[] entitites)
-    //        where Table_Entity : ITableEntity
-    //    {
-    //        List<Table_Entity> Processed_table_Entities = new List<Table_Entity>();
-
-    //        var table = tableAccess.tableClient;
-
-    //        foreach (var i in entitites)
-    //        {
-    //            try
-    //            {
-    //                Processed_table_Entities.Add(await tableAccess.post_EntityAsync(i));
-
-    //            }
-    //            catch (Exception Ex)
-    //            {
-    //                Console.WriteLine(Ex);
-    //            }
-    //        }
-
-
-    //        return Processed_table_Entities;
-    //    }
-
-
+    public static async Task Delete_Entity(this TableAccess tableAccess, string PartitionKey, string[] RowKeys, CancellationToken cancellationToken = default)
+    {
+        foreach (var RowKey in RowKeys)
+            if (RowKey?.Length > 0)
+                try
+                {
+                    _ = await tableAccess.tableClient.DeleteEntityAsync(PartitionKey, RowKey, cancellationToken: cancellationToken);
+                }
+                catch (RequestFailedException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    continue;
+                }
+                catch (Exception Ex)
+                {
+                    Console.WriteLine(Ex);
+                    throw;
+                }
+    }
 
     /*Filter help */
     /// <summary>
@@ -191,7 +208,7 @@ public static class TableStorageUtilityExtentions
         public static string Query_OnRowKey(string PartitionKey, string RowKey) => $"{nameof(ITableEntity.PartitionKey)} eq '{PartitionKey}' and {nameof(ITableEntity.RowKey)} eq '{RowKey}'";
 
 
-        //public static string field_Equal(string field, string value)
+        
 
 
 
@@ -241,8 +258,7 @@ public static class TableStorageUtilityExtentions
     }
 
 
-    public record TableQueryOptions<Table_Entity>(System.Linq.Expressions.Expression<Func<Table_Entity, bool>> filter, int? maxPerPage = null, IEnumerable<string> return_Fields = null, CancellationToken cancellationToken = default(CancellationToken)) where Table_Entity : class, ITableEntity, new();
-
+   
 }
 
 

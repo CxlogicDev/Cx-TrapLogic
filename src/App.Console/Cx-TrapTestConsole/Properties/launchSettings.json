@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Cx-TrapTestConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "azure-storage table"
+    }
+  }
+}

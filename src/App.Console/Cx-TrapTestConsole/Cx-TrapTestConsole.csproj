@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Cx_TrapTestConsole</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Utilities\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
+		<ProjectReference Include="..\..\Utilities\Cx-Utility-Console\Cx-Utility-Console.csproj" />
+		<ProjectReference Include="..\..\Azure\Cx-Azure-TableStorage\Cx-Azure-TableStorage.csproj" />
+	</ItemGroup>
+	
+</Project>

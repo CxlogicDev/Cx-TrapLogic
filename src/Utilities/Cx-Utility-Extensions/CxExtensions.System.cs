@@ -48,6 +48,49 @@ public static partial class CxExtensions //_System
     public static T ErrorIfNull<T>([NotNull]this T? obj, Exception? optionalexception = null) => obj ?? throw (optionalexception ?? new ArgumentNullException());
 
     /// <summary>
+    /// Null Check & Validation Check . Helps with the Null Checker. then validates the object with a validation check supplied.
+    /// </summary>
+    /// <typeparam name="T">The checking object type</typeparam>
+    /// <param name="obj">The object to check validation</param>
+    /// <param name="validation">The validation delegat</param>
+    /// <param name="optionalexception">optional supplied exception</param>
+    /// <returns>The object if not null and passes validation</returns>
+    /// <exception cref="InvalidOperationException">if the validation check on the object fails</exception>
+    [return: NotNull]
+    public static T ErrorIfNull_Or_NotValid<T>([NotNull]this T? obj, Func<T, bool> validation, Exception? optionalexception = null)
+    {
+        //Test Null 
+        _ = obj ?? throw (optionalexception ?? new ArgumentNullException(nameof(obj)));
+        _ = validation ?? throw (optionalexception ?? new ArgumentNullException(nameof(validation)));
+
+
+        if (!validation(obj))
+            throw new InvalidOperationException(message: "The object validate was invalid.");
+
+        return obj;
+    }
+
+    /// <summary>
+    /// Validation Check only. Validates the object with a validation check supplied
+    /// </summary>
+    /// <typeparam name="T">The checking object type</typeparam>
+    /// <param name="obj">The object to check validation</param>
+    /// <param name="validation">The validation delegat</param>
+    /// <param name="optionalexception">optional supplied exception</param>
+    /// <returns>The object if not null and passes validation</returns>
+    /// <exception cref="InvalidOperationException">if the validation check on the object fails</exception>
+    public static T? Error_IfNotValid<T>(this T? obj, Func<T?, bool> validation, Exception? optionalexception = null)
+    {
+        //Test Null        
+        _ = validation ?? throw (optionalexception ?? new ArgumentNullException(nameof(validation)));
+
+        if (!validation(obj))
+            throw new InvalidOperationException(message: "The object validate was invalid.");
+
+        return obj;
+    }
+
+    /// <summary>
     /// Will produce a list of indexs of where values are stored
     /// </summary>
     /// <typeparam name="T">The Object value to search from </typeparam>

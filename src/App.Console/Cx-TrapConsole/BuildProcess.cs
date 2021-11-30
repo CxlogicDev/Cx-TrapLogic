@@ -13,7 +13,7 @@ internal class BuildProcess : ConsoleBaseProcess
     Content_Path_Structure _contentRoot { get; }
     
     public BuildProcess(CxCommandService CxProcess, IConfiguration config, Microsoft.Extensions.Hosting.IHostEnvironment env) : 
-        base(CxProcess, config)     
+        base(CxProcess, config)
     {   
         _contentRoot = new Content_Path_Structure(env.ContentRootPath);
         ////Override the default 
