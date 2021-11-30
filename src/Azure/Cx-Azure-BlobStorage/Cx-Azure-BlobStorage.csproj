@@ -1,14 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>CxAzure.BlobStorage</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Version>1.0.0.2</Version>
+    <PackageId>Cx-Azure-BlobStorage</PackageId>
+    <Authors>Christifer</Authors>
+    <Company>CxLogicDev</Company>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
+    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.9" />
   </ItemGroup>
-
 </Project>

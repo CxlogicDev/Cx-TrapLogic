@@ -23,13 +23,13 @@ public record Build_Tree
     /// <param name="root_Path"></param>
     public Build_Tree(string root_Path)
     {
-        const string exclude = "Cx-TrapConsole.csproj";
+        string[] exclude = new[] { "Cx-TrapConsole.csproj", "Cx-TrapTestConsole.csproj" };
 
         if (Directory.Exists(root_Path))
         {
             rootPath = root_Path;
 
-            var Dir_Search_Results = Dir_Search(root_Path).Where(w => !w.EndsWith(exclude, StringComparison.OrdinalIgnoreCase));
+            var Dir_Search_Results = Dir_Search(root_Path).Where(w => !exclude.Any(a => w.EndsWith(a, StringComparison.OrdinalIgnoreCase)));
 
             foreach (var tb in Dir_Search_Results.Select(s => new Tree_Branch(s)))
             {
@@ -174,7 +174,7 @@ public record Build_Tree
             {
                 ct++;// = max_No_Refs;
                 ord.Publish_Order = ct;
-                Branch_Order[++ct] = ord;
+                Branch_Order[ct] = ord;
             }
 
         }
