@@ -2,7 +2,7 @@
   "profiles": {
     "Cx-TrapTestConsole": {
       "commandName": "Project",
-      "commandLineArgs": "azure-storage table"
+      "commandLineArgs": "azure-storage blob"
     }
   }
 }

@@ -1,29 +1,23 @@
-﻿using CxAzure.TableStorage;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Azure;
+using CxAzure.BlobStorage;
+using CxAzure.TableStorage;
 using CxUtility.Cx_Console;
-using Azure;
 
 namespace Cx_TrapTestConsole
 {
-    [CxConsoleInfo("azure-storage", typeof(Cx_Azure), CxRegisterTypes.Preview, "Live Inplace Testing Ground for Projects")]
-    internal class Cx_Azure : ConsoleBaseProcess
+    [CxConsoleInfo("azure-storage", typeof(Cx_Azure_Test), CxRegisterTypes.Preview, "Live Inplace Testing Ground for Projects")]
+    internal class Cx_Azure_Test : ConsoleBaseProcess
     {
-
-        public const string TestStorageTable_constr = nameof(TestStorageTable_constr);
-
         public const string testStorageTable = "xxcxtrapxxtest";
 
         TableAccess tableAccess { get; }
+        BlobAccess blobAccess { get; }
 
-        public Cx_Azure(TableAccess _tableAccess, CxCommandService CxProcess, IConfiguration config) :
+        public Cx_Azure_Test(TableAccess _tableAccess, BlobAccess _blobAccess, CxCommandService CxProcess, IConfiguration config) :
             base(CxProcess, config)
         {
             tableAccess = _tableAccess;
+            blobAccess = _blobAccess;
         }
 
         [CxConsoleAction("table", "Test Table storage Account", true, CxRegisterTypes.Register)]
@@ -84,5 +78,42 @@ namespace Cx_TrapTestConsole
             public DateTimeOffset? Timestamp { get; set; }
             public ETag ETag { get; set; }
         }
+
+        public const string testBlobContainer = "xxcxtrapxxtestxx";
+
+        [CxConsoleAction("blob", "Test Table storage Account", true, CxRegisterTypes.Register)]
+        public async Task Test_blobs(CancellationToken cancellationToken)
+        {
+
+            await blobAccess.Delete_blobContainer_Async(testStorageTable, cancellationToken);//testBlobContainer
+
+
+            //Create Container
+            await blobAccess.Create_blobContainer_Async(cancellationToken: cancellationToken);
+
+            WriteOutput_Service.write_Lines(3, "Blob Container Created");
+
+            //Upload
+            //await blobAccess.Upload_Blob_Async("Some-File", blob_directory: ".app_data", cancellationToken: cancellationToken);
+
+            WriteOutput_Service.write_Lines(3, "blob uploaded");
+
+            //list  
+            var lst_Blobs = await blobAccess.List_Blob_Async();
+
+            WriteOutput_Service.write_Lines(3, lst_Blobs.Select(s => s.Name).ToArray());
+
+            //Download
+            //var downloadBlob = await blobAccess.Download_Blob_Async($"Some-File", ".app_data/TestFile.txt", cancellationToken: cancellationToken);
+
+            //WriteOutput_Service.write_Lines(3, $"Download status: {downloadBlob}");
+
+            //deleted
+            var blob_Deleted = await blobAccess.Delete_Blob_Async(".app_data/TestFile.txt", cancellationToken: cancellationToken);
+
+            WriteOutput_Service.write_Lines(3, $"Blob Deleted: {blob_Deleted}");
+        }
+
+
     }
 }

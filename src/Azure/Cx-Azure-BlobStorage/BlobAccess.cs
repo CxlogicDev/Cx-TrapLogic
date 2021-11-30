@@ -6,11 +6,14 @@ namespace CxAzure.BlobStorage;
 public class BlobAccess
 {
     [AllowNull]
-    string accountConnString { get; }
+    private string accountConnString { get; }
 
-    public BlobAccess(string AccountConnString)
+    public string containerName { get; }
+
+    public BlobAccess(string ContainerName, string AccountConnString)
     {
         accountConnString = AccountConnString;
+        containerName = ContainerName;
     }
 
 
@@ -27,13 +30,15 @@ public class BlobAccess
         }
     }
 
-    BlobContainerClient ConatinerClient(string ContainerName)
+    public BlobContainerClient ConatinerClient(string ContainerName)
     {
         if(ContainerName?.Length > 0)
             return new BlobContainerClient(accountConnString, ContainerName);        
 
         throw new InvalidOperationException($"The {nameof(ContainerName)} value is null or empty!!");
     }
+
+    
 
 
 
