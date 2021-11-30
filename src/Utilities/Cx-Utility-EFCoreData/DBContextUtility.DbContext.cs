@@ -420,4 +420,26 @@ public static partial class DBContextUtility
 
         return objList;
     }
+
+    /// <summary>
+    /// Calls and Configures all {someValue}_OnModelCreating method in the context on build
+    /// </summary>
+    /// <typeparam name="ConfigCtx">the generic context type to use</typeparam>
+    /// <param name="mthis">The DbContext that being configured</param>
+    /// <param name="modelBuilder">The model builder object</param>
+    public static void Configure_LiteOnModelCreating<ConfigCtx>(this ConfigCtx mthis, ModelBuilder modelBuilder) where ConfigCtx : DbContext
+    {
+        ///
+        var methods = typeof(ConfigCtx)
+            .GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Where(w => w.Name.ToLower().Contains("_OnModelCreating".ToLower()))
+            .ToList();
+
+        ///
+        methods.ForEach(a => {
+            a?.Invoke(mthis, new[] { modelBuilder });
+        });
+    }
+
+
 }

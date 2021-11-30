@@ -1,5 +1,6 @@
 ﻿global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 using CxUtility.Cx_Console;
 using Cx_TrapTestConsole;
@@ -25,6 +26,13 @@ await CxConsoleHostBuilder
             ser.AddScoped<TableAccess>(c => new(Cx_Azure_Test.testStorageTable, TestStorage));
             ser.AddScoped<BlobAccess>(b => new(Cx_Azure_Test.testBlobContainer, TestStorage));//testBlobContainer
         }
+
+
+        ser.AddDbContext<CxEFCoreSqliteContext>(op => op.UseSqlite($"Data Source={CxEFCoreSqliteContext.sqliteTest};"));
+
+        //optionsBuilder.UseSQLite("Data Source=CustomerDB.db;");
+
+
         //new(Cx_Azure.testStorageTable, "https://cx0aws.table.core.windows.net", "cx0aws", "9tWo85i/mBWEhgrulhlzg7f3F9sl43VPdShcBtZxpAfg2GlXNjv89SJHjH9nEpBEgFeeO/zOQkSr5Bh6ier0yg==")
 
     })

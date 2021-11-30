@@ -4,13 +4,13 @@
     <RootNamespace>CxAzure.TableStorage</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.2</Version>
+    <Version>1.0.0.3</Version>
     <PackageId>Cx-Azure-TableStorage</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Data.Tables" Version="12.3.0" />
-    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.9" />
+    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.10" />
   </ItemGroup>
 </Project>

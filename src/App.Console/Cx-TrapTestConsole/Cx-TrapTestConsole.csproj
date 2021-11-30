@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Azure\Cx-Azure-BlobStorage\Cx-Azure-BlobStorage.csproj" />
+    <ProjectReference Include="..\..\Utilities\Cx-Utility-EFCoreData-Sqlite\Cx-Utility-EFCoreData-Sqlite.csproj" />
     <ProjectReference Include="..\..\Utilities\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
     <ProjectReference Include="..\..\Utilities\Cx-Utility-Console\Cx-Utility-Console.csproj" />
     <ProjectReference Include="..\..\Azure\Cx-Azure-TableStorage\Cx-Azure-TableStorage.csproj" />

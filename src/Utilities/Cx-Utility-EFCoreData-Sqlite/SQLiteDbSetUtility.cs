@@ -91,6 +91,51 @@ public static class SQLiteDbSetUtility
     }
 
     /// <summary>
+    /// Will save If Change Tracker has changes for tracked entries. 
+    /// </summary>
+    /// <param name="ctx">The Context used</param>
+    /// <param name="CleanChangeTracker">Tell The save process to clean The Change Tracker after saved. Errors will Automatically Clean Tracker</param>
+    /// <returns> -1: No Changes in tracker; else the number of changed records. </returns>
+    public static async Task<int> SaveLiteChangesCleanTrackerAsync(this DbContext ctx, bool CleanChangeTracker = false)
+    {
+        int ct;
+
+        try
+        {
+            if (ctx == null)
+                throw new ArgumentNullException(nameof(ctx));
+
+            if (!ctx.ChangeTracker.HasChanges())
+                return -1;
+
+            ct = await ctx.SaveChangesAsync();
+
+            if (CleanChangeTracker)
+                ctx.CleanLiteChangeTracker();
+        }
+        catch (Exception Ex)
+        {
+            ctx?.ChangeTracker.Clear();
+            Console.WriteLine(Ex.ToString());
+            throw;
+        }
+
+        return ct;
+    }
+
+    /// <summary>
+    /// Will Clean the Change Tracker
+    /// </summary>
+    /// <param name="ctx"></param>
+    public static void CleanLiteChangeTracker(this DbContext ctx)
+    {
+        if (ctx == null)
+            throw new ArgumentNullException(nameof(ctx));
+
+        ctx.ChangeTracker.Clear();
+    }
+
+    /// <summary>
     /// Runs Updates on IProxy Properties
     /// </summary>
     /// <typeparam name="T">The IProxy object to Process</typeparam>
@@ -176,6 +221,24 @@ public static class SQLiteDbSetUtility
 
         return _record;
     }
+
+
+
+    public static void Configure_LiteOnModelCreating<ConfigCtx>(this ConfigCtx mthis,  ModelBuilder modelBuilder) where ConfigCtx : DbContext
+    {
+        ///
+        var methods = typeof(ConfigCtx)
+            .GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Where(w => w.Name.ToLower().Contains("_OnModelCreating".ToLower()))
+            .ToList();
+
+        ///
+        methods.ForEach(a => {
+            a?.Invoke(mthis, new[] { modelBuilder });
+        });
+    }
+
+
 }
 
 
