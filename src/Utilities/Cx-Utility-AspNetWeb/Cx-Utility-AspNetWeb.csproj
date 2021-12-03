@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <RootNamespace>CxUtility.AspNetWeb</RootNamespace>
+    <Version>1.0.0.4</Version>
+    <PackageId>Cx-Utility-AspNetWeb</PackageId>
+    <Authors>Christifer</Authors>
+    <Company>CxLogicDev</Company>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.10" />
+  </ItemGroup>
+</Project>
