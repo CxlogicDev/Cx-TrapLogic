@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>CxUtility.Cx_Console</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.11</Version>
+    <Version>1.0.0.12</Version>
     <PackageId>Cx-Utility-Console</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
@@ -21,6 +21,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.11" />	 
+    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.11" />
   </ItemGroup>
 </Project>
