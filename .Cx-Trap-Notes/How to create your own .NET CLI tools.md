@@ -16,6 +16,9 @@ Refereneces:
 
 Create Tool Commands: 
 
-- Global 
+- global 
 dotnet tool install --global --add-source {some-[relative or absoluste]-output-path} {console-project-Root-level-Namespace}
 
+- local
+> dotnet new tool-manifest
+> dotnet tool install --local --add-source {some-[relative or absoluste]-output-path} {console-project-Root-level-Namespace}

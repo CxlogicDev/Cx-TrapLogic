@@ -423,6 +423,12 @@ public record Tree_Branch
         doc.Save(Proj_Path);
     }
 
+    /// <summary>
+    /// Updates the ItemGroup >> Package References 
+    /// </summary>
+    /// <param name="Ref_Branches">The Branch and updated packages to change on the project</param>
+    /// <exception cref="FileNotFoundException">Cant find the .csproj file to update</exception>
+    /// <exception cref="FileLoadException">The Npject node is missing in the .csproj file</exception>
     internal void UpdateReferences(IEnumerable<(Tree_Branch branch, string Cx_nupkg_Path)> Ref_Branches)
     {
 
