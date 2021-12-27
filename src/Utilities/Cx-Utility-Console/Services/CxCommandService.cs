@@ -1,11 +1,20 @@
 ﻿namespace CxUtility.Cx_Console;
 
+/// <summary>
+/// Service that pull Process, Comman Name and the Args supplied
+/// </summary>
 public sealed record CxCommandService  
 {
-
+    /// <summary>
+    /// The Process being called
+    /// </summary>
     public string Process { get; }
     
+    /// <summary>
+    /// The Command action be taken
+    /// </summary>
     public string Command { get; }
+
 
     public bool isValid()
     {
@@ -33,8 +42,16 @@ public sealed record CxCommandService
     /// </summary>
     internal Dictionary<string, string> _Args = new Dictionary<string, string>();
 
+    /// <summary>
+    /// Pulls a list of all Args and values supplied
+    /// </summary>
     public (string arg, string value)[] Args => _Args.Select(s => (s.Key, s.Value)).ToArray();
 
+    /// <summary>
+    /// Gets the Args asked for by key. You may need to inclued aprefix of [-{key}]
+    /// </summary>
+    /// <param name="key">The key to the value. </param>
+    /// <param name="val">The value of supplied. </param>
     public bool getCommandArg(string key, out string? val) => _Args.TryGetValue(key, out val);
 
     /// <summary>

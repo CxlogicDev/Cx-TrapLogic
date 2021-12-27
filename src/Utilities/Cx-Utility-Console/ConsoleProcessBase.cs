@@ -63,7 +63,7 @@ public abstract class ConsoleBaseProcess : IConsoleProcessService
             //Define the Action
             CommandHelpInfo actInfo = new CommandHelpInfo(item.Value._attribute.name, item.Value._attribute.description, item.Value._attribute.registerType);
 
-            var result = item.Value.method.getInfoActionArgs().Where(w => w.arg_isActive).Select(s => new CommandArgsHelpInfo(s.arg_Key, s.arg_Description, s.arg_Type));
+            var result = item.Value.method.getInfoActionArgs().Where(w => w.arg_isActive).Select(s => new CommandArgsHelpInfo(s.arg_Key, s.arg_Description, s.arg_Type) { isRequired = s.arg_isRequired });
             actInfo.addAction_ArgsHelpInfo(result.ToArray());
 
             procInfo.Add(actInfo);
