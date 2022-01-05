@@ -31,7 +31,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cx-TrapTestConsole", "src\A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cx-Azure-BlobStorage", "src\Azure\Cx-Azure-BlobStorage\Cx-Azure-BlobStorage.csproj", "{CB362A24-4D71-49FA-ACA0-4C9B8D03F280}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cx-Utility-AspNetWeb", "src\Utilities\Cx-Utility-AspNetWeb\Cx-Utility-AspNetWeb.csproj", "{233C5CF6-41BC-44F9-978E-4F769E3DB3F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cx-Utility-AspNetWeb", "src\Utilities\Cx-Utility-AspNetWeb\Cx-Utility-AspNetWeb.csproj", "{233C5CF6-41BC-44F9-978E-4F769E3DB3F1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Packages", "Packages", "{FE87BF2A-6949-4146-B1A8-1799CAD7D072}"
+	ProjectSection(SolutionItems) = preProject
+		.Cx-Trap-base-packages\Cx-Utility-Extensions.1.0.0.11.nupkg = .Cx-Trap-base-packages\Cx-Utility-Extensions.1.0.0.11.nupkg
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{F0867208-821A-4642-9899-00F6FFAC8633}"
+	ProjectSection(SolutionItems) = preProject
+		.Cx-Trap-Notes\How to create your own .NET CLI tools.md = .Cx-Trap-Notes\How to create your own .NET CLI tools.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,6 +108,7 @@ Global
 		{FF335A17-2E55-4E92-83A1-50A35C0DB2E1} = {7B401836-DA71-4605-82F8-5D074D52D909}
 		{CB362A24-4D71-49FA-ACA0-4C9B8D03F280} = {8558687B-9357-441C-8551-1D48407FA47C}
 		{233C5CF6-41BC-44F9-978E-4F769E3DB3F1} = {111F6A07-0088-40CD-95B1-99A6E77F7AAE}
+		{FE87BF2A-6949-4146-B1A8-1799CAD7D072} = {7B401836-DA71-4605-82F8-5D074D52D909}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3006AF55-8AD7-420A-A053-9381E831CD02}

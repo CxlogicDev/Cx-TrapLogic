@@ -88,7 +88,7 @@ internal class BuildProcess : ConsoleBaseProcess
 
     [CxConsoleAction("build", CommandDisplayInfo.build_action_description, false, CxRegisterTypes.Preview)]
     [CxConsoleActionArg("p", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_p__Publish_Description, true, false)]
-    [CxConsoleActionArg("pa", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_pa__Publish_Description, false, false)]
+    [CxConsoleActionArg("pa", CxConsoleActionArgAttribute.arg_Types.Switch, CommandDisplayInfo.build_arg_pa__Publish_Description, false, false)]    
     //[CxConsoleActionArg("report", CxConsoleActionArgAttribute.arg_Types.Value, CommandDisplayInfo.build_arg_report__Publish_Description, false, false)]
     public async Task BuildSolutionTree(CancellationToken cancellationToken)
     {
@@ -102,7 +102,7 @@ internal class BuildProcess : ConsoleBaseProcess
 
         bool publish = _CxCommandService.getCommandArg("-p", out var _);
 
-        bool publish_All = _CxCommandService.getCommandArg("-pa", out var _);
+        bool publish_All = _CxCommandService.getCommandArg("-pa", out var _);        
 
         Build_Tree _tree = Build_Tree.LoadFrom_File(_contentRoot.start_Dir, _contentRoot.CxTreeRootPath);
 
@@ -127,7 +127,7 @@ internal class BuildProcess : ConsoleBaseProcess
 
             foreach (var item in build_List)
             {
-                bool hasMatchedRef = item.References.Where(w => w.isLocal).Any(a => a.name.hasCharacters() && Publis_Reference_To_Me.ContainsKey(a.name));
+                bool hasMatchedRef = item.References.Where(w => w.isLocal).Any(a => (a.name?.Length > 0) && Publis_Reference_To_Me.ContainsKey(a.name));
 
                 if (item.Proj_Name == null)
                     continue;
@@ -186,6 +186,7 @@ internal class BuildProcess : ConsoleBaseProcess
                     return;
                 }
             }
+
 
             foreach (var i in Publis_Reference_To_Me)
             {

@@ -120,6 +120,12 @@ internal class CxLogService : ICxLogService
             if (proAct.ActionArguments?.Length > 0)
                 foreach (var item in proAct.ActionArguments)
                 {
+                    if(item.isRequired)
+                    {
+                        WriteLine($"          {new string(' ', 4)}arg [Required]: -{item.key} >>> {item.description}");
+                        continue;
+                    }
+
                     WriteLine($"          {new string(' ', 4)}arg: -{item.key} >>> {item.description}");
                 }
             WriteLine();

@@ -6,8 +6,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>1.0.0.1</Version>
+	  
+	<PackAsTool>true</PackAsTool>
+	<ToolCommandName>cxtrap</ToolCommandName>
+	<!--<PackageOutputPath></PackageOutputPath>-->  
   </PropertyGroup>
-  <ItemGroup>
+  
+	<ItemGroup>
     <ProjectReference Include="..\..\Utilities\Cx-Utility-Console\Cx-Utility-Console.csproj" />
   </ItemGroup>
 </Project>
