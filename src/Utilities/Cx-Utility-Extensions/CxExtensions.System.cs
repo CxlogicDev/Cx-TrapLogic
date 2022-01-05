@@ -4,12 +4,10 @@ namespace System;
 using Text.Json;
 using Diagnostics.CodeAnalysis;
 
-
-
 /// <summary>
 /// Use for common re-used methods 
 /// </summary>
-public static partial class CxExtensions //_System
+public static partial class CxExtensions
 {
 
     /// <summary>
@@ -139,11 +137,7 @@ public static partial class CxExtensions //_System
     }
 }
 
-
-
-
-
 /*
  
- - ToDo: into a yaml converter
+ - ToDo: look into a yaml converter
  */
