@@ -19,7 +19,7 @@ public static partial class DBContextUtility
     /// <param name="Input_Obj">The Object being Added/Updated</param>
     /// <param name="SearchPredicate">The search perdicate to find an exsiting entity </param>
     /// <param name="UpdateFields">The Fields that are allowed to be updated. Leave empty if you want to Add Only</param>
-    public static async Task<T> AddUpdateEntity<T>(this DbSet<T> entityObj, T Input_Obj, Expression<Func<T, bool>> SearchPredicate, params string[] UpdateFields) 
+    public static async Task<T> AddUpdateEntityAsync<T>(this DbSet<T> entityObj, T Input_Obj, Expression<Func<T, bool>> SearchPredicate, params string[] UpdateFields) 
         where T : class, new()
     {
         T? record = default;
@@ -70,7 +70,7 @@ public static partial class DBContextUtility
     /// <param name="SearchPredicate">Required: The search perdicate to find the exsiting entity. </param>
     /// <param name="UpdateFields">The Fields that are allowed to be updated.</param>
     /// <returns>The Record that being updated.</returns>
-    public static async Task<T?> UpdateEntity<T>(this DbSet<T> entityObj, T Itm, Expression<Func<T, bool>> SearchPredicate, params string[] UpdateFields) 
+    public static async Task<T?> UpdateEntityAsync<T>(this DbSet<T> entityObj, T Itm, Expression<Func<T, bool>> SearchPredicate, params string[] UpdateFields) 
         where T : class, new() => 
             await entityObj.UpdateEntityAsync(o =>
             {
