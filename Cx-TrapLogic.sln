@@ -36,6 +36,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Packages", "Packages", "{FE87BF2A-6949-4146-B1A8-1799CAD7D072}"
 	ProjectSection(SolutionItems) = preProject
 		.Cx-Trap-base-packages\Cx-Utility-Extensions.1.0.0.11.nupkg = .Cx-Trap-base-packages\Cx-Utility-Extensions.1.0.0.11.nupkg
+		.Cx-Trap-base-packages\Cx-Utility-Extensions.1.0.0.12.nupkg = .Cx-Trap-base-packages\Cx-Utility-Extensions.1.0.0.12.nupkg
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{F0867208-821A-4642-9899-00F6FFAC8633}"
