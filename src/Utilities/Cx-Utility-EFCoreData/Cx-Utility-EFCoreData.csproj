@@ -4,7 +4,7 @@
     <RootNamespace>CxUtility.EFCoreData</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.6</Version>
+    <Version>1.0.0.7</Version>
     <PackageId>Cx-Utility-EFCoreData</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
