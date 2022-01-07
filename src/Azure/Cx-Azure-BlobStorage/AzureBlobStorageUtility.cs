@@ -8,18 +8,23 @@ public static class AzureBlobStorageUtility
 {
 
     /// <summary>
-    /// 
+    /// WIll Create a new Blob container if it does not exist.
     /// </summary>
-    /// <param name="_Access"></param>
-    /// <param name="containerName"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="_Access">The blob storage Access</param>
+    /// <param name="ContainerName">The Alternate conatiner then the one in the Access object</param>
+    /// <param name="cancellationToken">The supplied Cancle Token</param>
     public static async Task Create_blobContainer_Async(this BlobAccess _Access, string? ContainerName = null, CancellationToken cancellationToken = default)
     {
         _ = await _Access.ConatinerClient(ContainerName ?? _Access.containerName)
             .CreateIfNotExistsAsync(cancellationToken: cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes the whole blob container.
+    /// </summary>
+    /// <param name="_Access">The blob storage Access</param>
+    /// <param name="ContainerName">The Alternate conatiner then the one in the Access object</param>
+    /// <param name="cancellationToken">The supplied Cancle Token</param>
     public static async Task<bool> Delete_blobContainer_Async(this BlobAccess _Access, string ContainerName, CancellationToken cancellationToken = default)
     {
         bool isDeleted = false;
@@ -32,11 +37,10 @@ public static class AzureBlobStorageUtility
     }
 
     /// <summary>
-    /// 
+    /// Get a list of all blobs in the container.
     /// </summary>
-    /// <param name="_Access"></param>
-    /// <param name="ContainerName"></param>
-    /// <returns></returns>
+    /// <param name="_Access">The blob storage Access</param>
+    /// <param name="ContainerName">The Alternate conatiner then the one in the Access object</param>
     public static async Task<List<BlobItem>> List_Blob_Async(this BlobAccess _Access, string? ContainerName = null, CancellationToken cancellationToken = default)
     {
         List<BlobItem> items = new List<BlobItem>();
@@ -48,14 +52,13 @@ public static class AzureBlobStorageUtility
     }
 
     /// <summary>
-    /// 
+    /// Will Upload a file to the azure container.
     /// </summary>
-    /// <param name="_Access"></param>
-    /// <param name="filePath"></param>
-    /// <param name="ContainerName"></param>
-    /// <param name="blob_directory"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="_Access">The blob storage Access</param>
+    /// <param name="filePath">The File Path to the blob to upload</param>
+    /// <param name="ContainerName">The Alternate conatiner then the one in the Access object</param>
+    /// <param name="blob_directory">Add to a directory</param>
+    /// <param name="cancellationToken">The supplied Cancle Token</param>
     public static async Task Upload_Blob_Async(this BlobAccess _Access, string filePath, string? ContainerName = null, string? blob_directory = null, CancellationToken cancellationToken = default)
     {
         if (!(filePath?.Length > 0) || !File.Exists(filePath))
@@ -73,15 +76,41 @@ public static class AzureBlobStorageUtility
     }
 
     /// <summary>
-    /// 
+    /// Will Upload a blob file. If the file already it will be deleted first.
     /// </summary>
-    /// <param name="_Access"></param>
-    /// <param name="Destination_Path"></param>
-    /// <param name="ContainerName"></param>
-    /// <param name="blob_Path_Name"></param>
-    /// <param name="blob_directory"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="_Access">The blob storage Access</param>
+    /// <param name="filePath">The File Path to the blob to upload</param>
+    /// <param name="ContainerName">The Alternate conatiner then the one in the Access object</param>
+    /// <param name="blob_directory">Add to a directory</param>
+    /// <param name="cancellationToken">The supplied Cancle Token</param>
+    public static async Task Upload_Blob_Delete_If_Exists_Async(this BlobAccess _Access, string filePath, string? ContainerName = null, string? blob_directory = null, CancellationToken cancellationToken = default)
+    {
+        if (!(filePath?.Length > 0) || !File.Exists(filePath))
+            return;
+
+        string blob = filePath.Split(Path.DirectorySeparatorChar).Last();
+
+        if (blob_directory?.Length > 0)
+            blob = $"{blob_directory.TrimEnd('/')}/{blob}";
+
+        BlobClient blobClient = _Access.ConatinerClient(ContainerName ?? _Access.containerName).GetBlobClient(blob);
+
+        if (await blobClient.ExistsAsync(cancellationToken))
+            _ = await _Access.Delete_Blob_Async(blob, cancellationToken: cancellationToken);
+
+        //Upload in place of Delete blob
+        _ = await blobClient.UploadAsync(filePath, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Will download the blob to the supplied system
+    /// </summary>
+    /// <param name="_Access">The blob storage Access</param>
+    /// <param name="Destination_Path">The path to down load the file too</param>
+    /// <param name="ContainerName">The Alternate conatiner then the one in the Access object</param>
+    /// <param name="blob_Path_Name">Path to the blob to download</param>
+    /// <param name="blob_directory">if the blob is in a directory</param>
+    /// <param name="cancellationToken">The supplied Cancle Token</param>
     public static async Task<System.Net.HttpStatusCode> Download_Blob_Async(this BlobAccess _Access, string Destination_Path, string? blob_Path_Name, string? ContainerName = null, CancellationToken cancellationToken = default)
     {
         if (!(Destination_Path?.Length > 0))
@@ -107,13 +136,12 @@ public static class AzureBlobStorageUtility
     }
 
     /// <summary>
-    /// 
+    /// Will delete a blob. 
     /// </summary>
-    /// <param name="_Access"></param>
-    /// <param name="blob_Path_Name"></param>
-    /// <param name="ContainerName"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="_Access">The blob storage Access</param>
+    /// <param name="blob_Path_Name">The blob to delete with the directory added</param>
+    /// <param name="ContainerName">The Alternate conatiner then the one in the Access object</param>
+    /// <param name="cancellationToken">The supplied Cancle Token</param>
     public static async Task<bool> Delete_Blob_Async(this BlobAccess _Access, string? blob_Path_Name, string? ContainerName = null, CancellationToken cancellationToken = default)
     {
        var result = await _Access.ConatinerClient(ContainerName ?? _Access.containerName)
