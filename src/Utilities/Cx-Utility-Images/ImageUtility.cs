@@ -11,8 +11,19 @@ public enum ImageFormats { jpg, jpeg, png, gif }
 
 public record ImageFormat
 {
+    /// <summary>
+    /// The Format Type
+    /// </summary>
     public ImageFormats Format { get; }
+
+    /// <summary>
+    /// The Format value of the format
+    /// </summary>
     public int value => (int)Format;
+    
+    /// <summary>
+    /// The file extention of the Format type
+    /// </summary>
     public string name => Format switch
     {
         ImageFormats.jpg => nameof(ImageFormats.jpg),
@@ -21,6 +32,22 @@ public record ImageFormat
         ImageFormats.gif => nameof(ImageFormats.gif),
         _ => throw new InvalidOperationException()
     };
+
+    /// <summary>
+    /// The Image Context Type
+    /// </summary>
+    public string Image_ContextType => Format.Image_ContextType();
+
+    /// <summary>
+    /// The Base64 Context Type 
+    /// </summary>
+    public string Image_Base64Data_ContextType(string? base64String = default) => base64String.hasNoCharacters()? Format.Image_Base64Data_ContextType() :
+        $"{Format.Image_Base64Data_ContextType()}{base64String}";
+
+    /// <summary>
+    /// The Image file Extention type
+    /// </summary>
+    public string Image_ExtentionTypes => Format.Image_ExtentionTypes();
 
     private ImageFormat(ImageFormats _format)
     {
@@ -31,8 +58,6 @@ public record ImageFormat
     public static ImageFormat jpeg = new(ImageFormats.jpeg);
     public static ImageFormat png = new(ImageFormats.png);
     public static ImageFormat gif = new(ImageFormats.gif);
-
-
 }
 
 public static class ImageUtility
@@ -143,24 +168,6 @@ public static class ImageUtility
                 return false;
         }
     }
-
-    //public static string imageTo64BaseString(string ImagePath)
-    //{
-    //    using (Image image = Image.FromFile(ImagePath))
-    //    {
-    //        using (MemoryStream m = new MemoryStream())
-    //        {
-    //            image.Save(m, image.RawFormat);
-    //            byte[] imageBytes = m.ToArray();
-
-    //            // Convert byte[] to Base64 String
-    //            string base64String = Convert.ToBase64String(imageBytes);
-    //            return base64String;
-    //        }
-    //    }
-    //}
-
-
 
     /// <summary>
     /// The context type based from the path extention.

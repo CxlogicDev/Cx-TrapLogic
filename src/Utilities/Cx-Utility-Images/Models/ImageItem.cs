@@ -14,9 +14,7 @@ public record ImageItem(string FilePath)
     public bool isValidFormat => FilePath.isNull() ? false : this.isValidFormat();
 }
 
-/// <summary>
-/// 
-/// </summary>
+
 public record ImageResult : ImageItem
 {
 
@@ -51,7 +49,7 @@ public record ImageResult : ImageItem
     {
         _ = _filePath.ErrorIfNull_Or_NotValid(v => isUrl || File.Exists(v), new InvalidOperationException());
 
-        Data = preservByteData ? _data : null;
+        Data = preserveByteData ? _data : null;
 
         base64String = Convert.ToBase64String(_data);
     }
