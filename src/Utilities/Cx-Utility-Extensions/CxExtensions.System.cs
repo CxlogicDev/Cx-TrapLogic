@@ -51,19 +51,19 @@ public static partial class CxExtensions
     /// <typeparam name="T">The checking object type</typeparam>
     /// <param name="obj">The object to check validation</param>
     /// <param name="validation">The validation delegat</param>
-    /// <param name="optionalexception">optional supplied exception</param>
+    /// <param name="validationException">optional supplied exception</param>
     /// <returns>The object if not null and passes validation</returns>
     /// <exception cref="InvalidOperationException">if the validation check on the object fails</exception>
     [return: NotNull]
-    public static T ErrorIfNull_Or_NotValid<T>([NotNull]this T? obj, Func<T, bool> validation, Exception? optionalexception = null)
+    public static T ErrorIfNull_Or_NotValid<T>([NotNull]this T? obj, Func<T, bool> validation, Exception? validationException = default, Exception? nullException = default)
     {
         //Test Null 
-        _ = obj ?? throw (optionalexception ?? new ArgumentNullException(nameof(obj)));
-        _ = validation ?? throw (optionalexception ?? new ArgumentNullException(nameof(validation)));
+        _ = obj ?? throw (nullException ?? new ArgumentNullException(nameof(obj)));
+        _ = validation ?? throw (new ArgumentNullException(nameof(validation)));
 
 
         if (!validation(obj))
-            throw new InvalidOperationException(message: "The object validate was invalid.");
+            throw validationException ?? new InvalidOperationException(message: "The object validation was invalid.");
 
         return obj;
     }
