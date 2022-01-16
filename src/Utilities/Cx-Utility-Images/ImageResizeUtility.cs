@@ -10,6 +10,45 @@
 //public static class ImageResizeUtility
 //{
 
+/*
+   /// <summary>
+   /// Converts a Image Path to a Scaled down Version
+   /// </summary>
+   /// <param name="ImagePath">The Base Url Path to The Image:</param>
+   /// <param name="maxWidth">The max With of the scaled Image</param>
+   /// <param name="returnSrcString">The Base string that is retunrd</param>
+   /// <returns></returns>
+   public static async Task<string> ImageUrlScaledTo64BaseString(this HttpClient web, string ImagePath, int maxWidth = 250, bool returnSrcString = false)
+   {
+       string contents = null;
+
+       //web.BaseAddress = new Uri(ImagePath); //Ex: ("http://localhost:9000/");
+       web.DefaultRequestHeaders.Accept.Clear();
+
+       using (var response = await web.GetStreamAsync(ImagePath)) //Ex: ("api/products/1");
+       using (Image image = Image.FromStream(response))
+       {
+           Image thumb = image.ScaleImageByWidth(maxWidth);//image.GetThumbnailImage(120, 120, () => false, IntPtr.Zero);
+
+           using (MemoryStream m = new MemoryStream())
+           {
+               thumb.Save(m, image.RawFormat);
+
+               byte[] imageBytes = m.ToArray();
+
+               // Convert byte[] to Base64 String
+               string base64String = Convert.ToBase64String(imageBytes);
+
+               contents = returnSrcString ? $"{ImageUtility.Acceptable_Image_ContextDataTypes(ImagePath)}{base64String}" : base64String;
+           }
+       }
+
+
+       return contents;
+   }
+   //*/
+
+
 //    //public static string imageTo64BaseString(string ImagePath)
 //    //{
 //    //    using (Image image = Image.FromFile(ImagePath))
