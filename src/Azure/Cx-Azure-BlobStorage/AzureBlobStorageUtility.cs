@@ -118,18 +118,17 @@ public static class AzureBlobStorageUtility
 
         var pathParts = Destination_Path.Split(Path.DirectorySeparatorChar);
                
-        if (!Directory.Exists(Path.Combine(pathParts[0..^2])))
-            _ = Directory.CreateDirectory(Path.Combine(pathParts[0..^2]));        
+        if (!Directory.Exists(Path.Combine(pathParts[0..^1])))
+            _ = Directory.CreateDirectory(Path.Combine(pathParts[0..^1]));        
 
         BlobClient blobClient = _Access.ConatinerClient(ContainerName ?? _Access.containerName)
             .GetBlobClient(blob_Path_Name);
 
         if (await blobClient.ExistsAsync(cancellationToken))
         {
-            var result = await blobClient.DownloadToAsync(Destination_Path);
+            var result = await blobClient.DownloadToAsync(Destination_Path, cancellationToken);
 
             return (System.Net.HttpStatusCode)result.Status;
-
         }
 
         return System.Net.HttpStatusCode.BadRequest;

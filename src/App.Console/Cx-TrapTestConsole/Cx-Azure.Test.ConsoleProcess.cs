@@ -81,20 +81,44 @@ namespace Cx_TrapTestConsole
 
         public const string testBlobContainer = "xxcxtrapxxtestxx";
 
+        [CxConsoleAction("blob-delete", "Test container delete > storage Account", true, CxRegisterTypes.Register)]
+        public async Task Test_Delete_blob(CancellationToken cancellationToken)
+        {
+           var isDelete =  await blobAccess.Delete_blobContainer_Async(testBlobContainer, cancellationToken);//testBlobContainer
+
+            WriteOutput_Service.write_Lines(3, $"Container: {testBlobContainer} statue: {(isDelete ? "Deleted" : "No Action")}");
+        }
+
         [CxConsoleAction("blob", "Test Table storage Account", true, CxRegisterTypes.Register)]
         public async Task Test_blobs(CancellationToken cancellationToken)
         {
-
-            await blobAccess.Delete_blobContainer_Async(testStorageTable, cancellationToken);//testBlobContainer
-
 
             //Create Container
             await blobAccess.Create_blobContainer_Async(cancellationToken: cancellationToken);
 
             WriteOutput_Service.write_Lines(3, "Blob Container Created");
 
+            var filePath = "Some-File.txt";
+
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            await File.AppendAllLinesAsync(filePath, new[] {
+
+                    $"Date To Process: {DateTime.Now.ToString("MMM-dd-yyyy")}",
+                    "I am a test File",
+                    "Azure Blob Testing",
+                    $"save Me in azure in the directory /.app_data/"
+
+                }, cancellationToken);
+
+
+            WriteOutput_Service.write_Lines(3,
+                $"File: {filePath} created at {Directory.GetCurrentDirectory().TrimEnd(Path.DirectorySeparatorChar)}{Path.DirectorySeparatorChar}{filePath}"
+            );
+
             //Upload
-            //await blobAccess.Upload_Blob_Async("Some-File", blob_directory: ".app_data", cancellationToken: cancellationToken);
+            await blobAccess.Upload_Blob_Delete_If_Exists_Async(filePath, blob_directory: ".app_data/", cancellationToken: cancellationToken);
 
             WriteOutput_Service.write_Lines(3, "blob uploaded");
 
@@ -103,15 +127,28 @@ namespace Cx_TrapTestConsole
 
             WriteOutput_Service.write_Lines(3, lst_Blobs.Select(s => s.Name).ToArray());
 
-            //Download
-            //var downloadBlob = await blobAccess.Download_Blob_Async($"Some-File", ".app_data/TestFile.txt", cancellationToken: cancellationToken);
+            var pDir = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}.app_data";
+            //if (Directory.Exists(pDir))
+            //    Directory.Delete(Directory.GetCurrentDirectory());            
 
-            //WriteOutput_Service.write_Lines(3, $"Download status: {downloadBlob}");
+            foreach (var blob in lst_Blobs)
+            {
 
-            //deleted
-            var blob_Deleted = await blobAccess.Delete_Blob_Async(".app_data/TestFile.txt", cancellationToken: cancellationToken);
+                var localPath = $"{pDir}{Path.DirectorySeparatorChar}{filePath}";
+                if(File.Exists(localPath))
+                    File.Delete(localPath);
 
-            WriteOutput_Service.write_Lines(3, $"Blob Deleted: {blob_Deleted}");
+                //$".app_data/{filePath}"
+                //Download
+                var downloadBlob = await blobAccess.Download_Blob_Async(localPath, blob.Name, cancellationToken: cancellationToken);
+
+                //WriteOutput_Service.write_Lines(3, $"Download status: {downloadBlob}");
+
+                //deleted
+                var blob_Deleted = await blobAccess.Delete_Blob_Async($".app_data/{filePath}", cancellationToken: cancellationToken);
+
+                WriteOutput_Service.write_Lines(3, $"Blob Deleted: {blob_Deleted}");
+            }
         }
 
 
