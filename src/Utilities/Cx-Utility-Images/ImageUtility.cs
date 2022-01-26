@@ -4,7 +4,7 @@ namespace CxUtility.Images;
 /// <summary>
 /// The Image type that processing covers
 /// </summary>
-public enum ImageFormats { jpg, jpeg, png, gif }
+public enum ImageFormats { unknown, jpg, jpeg, png, gif }
 
 public record ImageFormat
 {
@@ -27,7 +27,7 @@ public record ImageFormat
         ImageFormats.jpeg => nameof(ImageFormats.jpeg),
         ImageFormats.png => nameof(ImageFormats.png),
         ImageFormats.gif => nameof(ImageFormats.gif),
-        _ => throw new InvalidOperationException()
+        _ => nameof(ImageFormats.unknown)
     };
 
     /// <summary>
@@ -46,7 +46,7 @@ public record ImageFormat
     /// </summary>
     public string Image_ExtentionTypes => Format.Image_ExtentionTypes();
 
-    private ImageFormat(ImageFormats _format)
+    internal ImageFormat(ImageFormats _format)
     {
         Format = _format;
     }
@@ -55,14 +55,17 @@ public record ImageFormat
     public static ImageFormat jpeg = new(ImageFormats.jpeg);
     public static ImageFormat png = new(ImageFormats.png);
     public static ImageFormat gif = new(ImageFormats.gif);
+
+
 }
+
 
 public static class ImageUtility
 {
     /// <summary>
     /// The Image Types accepted for processing
     /// </summary>
-    public enum AccptedImageFormats { jpg, jpeg, png, gif }//, bmp, tga
+    public enum AccptedImageFormats { jpg = 1, jpeg, png, gif }//, bmp, tga
 
     internal static string[] Acceptable_Image_Types => new[] { ".jpg", ".jpeg", ".png", ".gif" };
 
@@ -101,6 +104,41 @@ public static class ImageUtility
         }
     }
 
+    public static ImageFormats ImageFormat_From_UrlExtention(string UrlPath)
+    {
+        if (UrlPath.hasNoCharacters())
+            return ImageFormats.unknown;
+
+        var partPart = UrlPath.Split('?').First().Split('/').Last();
+
+        if (!partPart.Contains("."))
+            return ImageFormats.unknown;
+
+        return partPart.ToLower().Split('.').Last() switch
+        {
+            "jpg" => ImageFormats.jpg,
+            "jpeg" => ImageFormats.jpeg,
+            "png" => ImageFormats.png,
+            "gif" => ImageFormats.gif,
+            _ => ImageFormats.unknown
+        };
+    }  
+       
+    public static ImageFormats ImageFormat_From_MediaType(string mediaType)
+    {
+        if (mediaType.hasNoCharacters())
+            return ImageFormats.unknown;
+
+        return mediaType.Trim().ToLower() switch
+        {
+            "image/jpg" => ImageFormats.jpg,
+            "image/jpeg" => ImageFormats.jpg,
+            "image/png" => ImageFormats.png,
+            "image/gif" => ImageFormats.gif,
+            _ => ImageFormats.unknown
+        };
+    }
+
     /// <summary>
     /// Downloads an Image from a url and convert to a image object.
     /// </summary>
@@ -114,12 +152,26 @@ public static class ImageUtility
 
         httpClient.DefaultRequestHeaders.Accept.Clear();
 
-        var response = await httpClient.GetByteArrayAsync(ImagePath); //Ex: ("api/products/1");
+        using var responseMessage = await httpClient.GetAsync(ImagePath);
+
+        var response = await responseMessage.Content.ReadAsByteArrayAsync();
+
+        string MediaType = responseMessage.Content.Headers.ContentType?.MediaType ?? "";
+        //if (ImageFormat_From_UrlExtention(_ImagePath) == ImageFormats.unknown)
+        //{
+        //    //Rename the file with a valid extention
+           
+
+
+        //}
+
+        //ImagePath
+
 
         ImageResult? Result = null;
 
         if (response?.Length > 0)
-            Result = new ImageResult(ImagePath, response, true);
+            Result = new ImageResult(ImagePath, MediaType, response, true);
 
         return Result;
     }
@@ -196,7 +248,8 @@ public static class ImageUtility
     public static string Image_ContextType(this ImageFormats _format) =>
         _format switch
         {
-            ImageFormats.jpg | ImageFormats.jpeg => "image/jpeg",
+            ImageFormats.jpg => "image/jpeg",
+            ImageFormats.jpeg => "image/jpeg",
             ImageFormats.png => "image/png",
             ImageFormats.gif => "image/gif",            
             _ => ""
@@ -208,18 +261,18 @@ public static class ImageUtility
     /// <param name="PathExt">The Image Path Extention</param>
     /// <exception cref="InvalidOperationException">The Extention does not match Invalid Operation Exceptions</exception>
     /// <exception cref="ArgumentNullException">The input argument is null</exception>
-    public static string Image_Base64Data_ContextTypes(string PathExt)
+    public static string Image_Base64Data_ContextTypes(string PathExt, string? base64String = null)
     {
         switch (PathExt.ErrorIfNull(new ArgumentNullException()))
         {
             case string when PathExt.EndsWith("jpg", StringComparison.OrdinalIgnoreCase) ||
                              PathExt.EndsWith("jpeg", StringComparison.OrdinalIgnoreCase):
-                return "data:image/jpeg;base64, ";
-            case string when PathExt.EndsWith("png", StringComparison.OrdinalIgnoreCase): return "data:image/png;base64, ";
-            case string when PathExt.EndsWith("gif", StringComparison.OrdinalIgnoreCase): return "data:image/gif;base64, ";
-            case string when PathExt.EndsWith("bmp", StringComparison.OrdinalIgnoreCase): return "data:image/bmp;base64, ";
-            case string when PathExt.EndsWith("svg", StringComparison.OrdinalIgnoreCase): return "data:image/svg;base64, ";
-            case string when PathExt.EndsWith("tiff", StringComparison.OrdinalIgnoreCase): return "data:image/tiff;base64, ";
+                return $"data:image/jpeg;base64, {base64String??""}";
+            case string when PathExt.EndsWith("png", StringComparison.OrdinalIgnoreCase): return $"data:image/png;base64, {base64String ?? ""}";
+            case string when PathExt.EndsWith("gif", StringComparison.OrdinalIgnoreCase): return $"data:image/gif;base64, {base64String ?? ""}";
+            case string when PathExt.EndsWith("bmp", StringComparison.OrdinalIgnoreCase): return $"data:image/bmp;base64, {base64String ?? ""}";
+            case string when PathExt.EndsWith("svg", StringComparison.OrdinalIgnoreCase): return $"data:image/svg;base64, {base64String ?? ""}";
+            case string when PathExt.EndsWith("tiff", StringComparison.OrdinalIgnoreCase): return $"data:image/tiff;base64, {base64String ?? ""}";
             default:
                 throw new InvalidOperationException();
         }
@@ -230,12 +283,13 @@ public static class ImageUtility
     /// </summary>
     /// <param name="_format"></param>
     /// <returns></returns>
-    public static string Image_Base64Data_ContextType(this ImageFormats _format) =>
+    public static string Image_Base64Data_ContextType(this ImageFormats _format, string? base64String = null) =>
       _format switch
       {
-          ImageFormats.jpg | ImageFormats.jpeg => "data:image/jpeg;base64, ",
-          ImageFormats.png => "data:image/png;base64, ",
-          ImageFormats.gif => "data:image/gif;base64, ",
+          ImageFormats.jpg => $"data:image/jpeg;base64, {base64String ?? ""}",
+          ImageFormats.jpeg => $"data:image/jpeg;base64, {base64String ?? ""}",
+          ImageFormats.png => $"data:image/png;base64, {base64String ?? ""}",
+          ImageFormats.gif => $"data:image/gif;base64, {base64String ?? ""}",
           _ => ""
       };
 
@@ -256,7 +310,7 @@ public static class ImageUtility
         }
     }
 
-    internal static string Image_ExtentionTypes(this ImageFormats _format) =>
+    public static string Image_ExtentionTypes(this ImageFormats _format) =>
         _format switch
         {
             ImageFormats.jpg => ".jpg",

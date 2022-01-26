@@ -30,26 +30,72 @@ public record ImageResult : ImageItem
     public string base64String { get; }
 
     /// <summary>
+    /// The Content Type of the Url file path
+    /// </summary>
+    public string? MediaType { get; }
+
+    /// <summary>
     /// The Base64 string for the Data Formatted. Ex: [data:image/png;base64, DB645.....]
     /// </summary>
-    public string Base64String_Formated => $"{Image_Base64Data_ContextTypes(FilePath)}{base64String}";
+    public string Base64String_Formated => isUrl? ImageFormat.Image_Base64Data_ContextType(base64String) : Image_Base64Data_ContextTypes(FilePath, base64String);
 
     /// <summary>
     /// Format of the image
     /// </summary>
-    public ImageFormats ImageFormat => ImageFormat_From_FileExtention(FilePath);
+    public ImageFormats ImageFormat => isUrl? 
+        (MediaType.hasCharacters()? ImageFormat_From_MediaType(MediaType) :  ImageFormat_From_UrlExtention(FilePath)) : 
+        ImageFormat_From_FileExtention(FilePath);
+
+    public string FileName()
+    {
+        if (FilePath.hasNoCharacters())
+            throw new InvalidOperationException("Not path was supplied");
+
+        if (isUrl)
+        {
+            var fName = FilePath.Split('?').First().Split('/').Last();
+
+            if (fName.Contains("."))
+                return fName;
+
+            return $"{fName}.{ImageFormat.Image_ExtentionTypes().TrimStart('.')}";
+        }
+
+        return FilePath.Split(Path.DirectorySeparatorChar).Last();
+
+        //=> isUrl ?
+        //    FilePath.Split('?').First().Split('/').Last() :
+    }
 
     /// <summary>
     /// Process the ImageResult record
     /// </summary>
     /// <param name="_filePath">The File Path to the image</param>
     /// <param name="_data">The image Byte Data</param>
-    /// <param name="preservByteData">Tells the Result to preserve the data</param>
+    /// <param name="preserveByteData">Tells the Result to preserve the data</param>
     public ImageResult(string _filePath, byte[] _data, bool preserveByteData = false) : base(_filePath)
     {
         _ = _filePath.ErrorIfNull_Or_NotValid(v => isUrl || File.Exists(v), new InvalidOperationException());
 
         Data = preserveByteData ? _data : null;
+
+        base64String = Convert.ToBase64String(_data);
+    }
+
+    /// <summary>
+    /// Process the ImageResult record
+    /// </summary>
+    /// <param name="_urlPath">The url Path to the image</param>
+    /// <param name="_contentType">The Media Type of the image</param>
+    /// <param name="_data">The image Byte Data</param>
+    /// <param name="preserveByteData">Tells the Result to preserve the data</param>
+    public ImageResult(string _urlPath, string _contentType, byte[] _data, bool preserveByteData) : base(_urlPath)
+    {
+        _ = _urlPath.ErrorIfNull_Or_NotValid(v => isUrl || File.Exists(v), new InvalidOperationException());
+
+        Data = preserveByteData ? _data : null;
+
+        MediaType = _contentType;
 
         base64String = Convert.ToBase64String(_data);
     }

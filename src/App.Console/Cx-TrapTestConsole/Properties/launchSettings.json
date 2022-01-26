@@ -7,6 +7,10 @@
     "Cx-TrapTestConsole-sqlite": {
       "commandName": "Project",
       "commandLineArgs": "efcore-sqlite test"
+    },
+    "Cx-Images": {
+      "commandName": "Project",
+      "commandLineArgs": "image resize -saveDir"
     }
   }
 }

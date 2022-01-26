@@ -29,6 +29,8 @@ await CxConsoleHostBuilder
 
         ser.AddDbContext<CxEFCoreSqliteContext>(op => op.UseSqlite($"Data Source={CxEFCoreSqliteContext.sqliteTest};"));
 
+        ser.AddHttpClient();
+
     })
     .RegisterAssembly(typeof(Cx_Azure_Test).Assembly)
     //.Register_TitleLineOptions(a =>
