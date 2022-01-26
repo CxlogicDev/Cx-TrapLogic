@@ -12,12 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="Cx-Utility-Images" Version="1.0.0.1" />-->
+    <PackageReference Include="Cx-Utility-Images" Version="1.0.0.2" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!--<ItemGroup>
     <ProjectReference Include="..\Cx-Utility-Images\Cx-Utility-Images.csproj" />
-  </ItemGroup>
+  </ItemGroup>-->
 
 </Project>

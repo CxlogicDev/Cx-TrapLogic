@@ -15,10 +15,9 @@ public static partial class CxUtilityExtensions
     /// Database Call could overrite 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="source"></param>
-    /// <param name="dop"></param>
-    /// <param name="body"></param>
-    /// <returns></returns>
+    /// <param name="source">The IEnumerable tocycle through </param>
+    /// <param name="dop">The Amount of processes to run at a time. Max of Environment.ProcessorCount</param>
+    /// <param name="body">The processing function </param>
     private static Task ForEachAsync<T>(this IEnumerable<T> source, int dop, Func<T, Task> body)
     {
         return Task.WhenAll(from partition in Partitioner.Create(source).GetPartitions(dop)
