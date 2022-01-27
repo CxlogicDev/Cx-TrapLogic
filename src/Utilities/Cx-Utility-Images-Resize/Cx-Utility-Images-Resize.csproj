@@ -1,23 +1,19 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>CxUtility.Images.Resizing</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <!--<Nullable>enable</Nullable>-->
-	  <Version>1.0.0.1</Version>
-	  <PackageId>Cx-Utility-Images-Resize</PackageId>
-	  <Authors>Christifer</Authors>
-	  <Company>CxLogicDev</Company>
+    <Version>1.0.0.2</Version>
+    <PackageId>Cx-Utility-Images-Resize</PackageId>
+    <Authors>Christifer</Authors>
+    <Company>CxLogicDev</Company>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Cx-Utility-Images" Version="1.0.0.2" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
   </ItemGroup>
-
   <!--<ItemGroup>
     <ProjectReference Include="..\Cx-Utility-Images\Cx-Utility-Images.csproj" />
   </ItemGroup>-->
-
 </Project>
