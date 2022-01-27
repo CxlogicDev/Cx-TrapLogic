@@ -156,9 +156,23 @@ public record Build_Tree
             //Get the max index to figure out where to upload
 
             int idx = 0;
-            if (order.Where(o => allRefName.Contains(o.Proj_Name)).Select((v, i) => i).Count() > 0)
-                throw new NotImplementedException("Sorr first time needs to be vairified");
+            if (order.Select(s => s.Proj_Name).Where(o => allRefName.Contains(o)).Select((v, i) => i).Count() > 0)
+            {
+                List<int> proj = new List<int>();
+
+                for (int i = 0; i < order.Count; i++)
+                {
+                    if(allRefName.Contains(order[i].Proj_Name))
+                        proj.Add(i);
+                }
+
+                idx = proj.Max();
+
+                //This will detect that a project has a reference to a diffrenet project that not the Cx-Utility-Extensions 
+                //throw new NotImplementedException("Sorr first time needs to be vairified");
+
                 //idx = order.Where(o => allRefName.Contains(o.Proj_Name)).Select((v, i) => i).Max();
+            }
 
             if (idx <= 0)
                 order.Add(obj.Value);
@@ -169,15 +183,13 @@ public record Build_Tree
         }
 
         if (order.Count > 0)
-        {
             foreach (var ord in order)
             {
                 ct++;// = max_No_Refs;
                 ord.Publish_Order = ct;
                 Branch_Order[ct] = ord;
             }
-
-        }
+        
 
 
         //Ignore any that have Project References

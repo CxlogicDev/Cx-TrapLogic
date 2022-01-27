@@ -2,7 +2,7 @@
   "profiles": {
     "Cx-TrapConsole": {
       "commandName": "Project",
-      "commandLineArgs": "project tree -r"
+      "commandLineArgs": "project tree "
     },
     "WSL": {
       "commandName": "WSL2",

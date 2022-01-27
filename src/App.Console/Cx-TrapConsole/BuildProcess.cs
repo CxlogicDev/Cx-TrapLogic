@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Cx_TrapConsole;
 
-[CxConsoleInfo("project", typeof(BuildProcess), CxRegisterTypes.Preview, "Helps Build the Soultion. Also used as a Training process to understand Console Pipelining ")]
+[CxConsoleInfo("project", typeof(BuildProcess), CxRegisterTypes.Register, "Helps Build the Soultion. Also used as a Training process to understand Console Pipelining ")]
 internal class BuildProcess : ConsoleBaseProcess
 {
     Content_Path_Structure _contentRoot { get; }
