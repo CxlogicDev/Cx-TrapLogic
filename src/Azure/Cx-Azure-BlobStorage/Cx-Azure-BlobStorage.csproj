@@ -4,13 +4,13 @@
     <RootNamespace>CxAzure.BlobStorage</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.8</Version>
+    <Version>1.0.0.9</Version>
     <PackageId>Cx-Azure-BlobStorage</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
-    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.14" />
+    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.15" />
   </ItemGroup>
 </Project>
