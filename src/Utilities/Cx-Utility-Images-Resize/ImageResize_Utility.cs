@@ -15,7 +15,6 @@ public static class ImageResize_Utility
     /// <param name="ImagePath">The Base Url Path to The Image:</param>
     /// <param name="maxWidth">The max With of the scaled Image</param>
     /// <param name="returnSrcString">The Base string that is retunrd</param>
-    /// <returns></returns>
     public static async Task<ImageResult> ImageUrlResult_ScaledByWidth(this HttpClient web, string ImagePath, int maxWidth = 250)
     {
 

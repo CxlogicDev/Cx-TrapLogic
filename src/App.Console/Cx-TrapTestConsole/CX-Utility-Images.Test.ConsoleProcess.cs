@@ -53,8 +53,4 @@ internal class Cx_Images_Test : ConsoleBaseProcess
 
     }
 
-
-
-
-
 }
