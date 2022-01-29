@@ -4,7 +4,7 @@
     <RootNamespace>CxUtility.Cx_Console</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.16</Version>
+    <Version>1.0.0.17</Version>
     <PackageId>Cx-Utility-Console</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
@@ -21,6 +21,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.15" />
+    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.16" />
   </ItemGroup>
 </Project>

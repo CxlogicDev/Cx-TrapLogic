@@ -4,13 +4,13 @@
     <RootNamespace>CxUtility.Images.Resizing</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <!--<Nullable>enable</Nullable>-->
-    <Version>1.0.0.3</Version>
+    <Version>1.0.0.4</Version>
     <PackageId>Cx-Utility-Images-Resize</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Cx-Utility-Images" Version="1.0.0.3" />
+    <PackageReference Include="Cx-Utility-Images" Version="1.0.0.4" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
   </ItemGroup>
   <!--<ItemGroup>
