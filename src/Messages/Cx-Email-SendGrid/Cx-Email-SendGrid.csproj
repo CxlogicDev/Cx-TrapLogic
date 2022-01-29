@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>CxMessage.Email.SendGrid</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<Version>1.0.0.1</Version>
+	<PackageId>Cx-Message-Email-SendGrid</PackageId>
+	<Authors>Christifer</Authors>
+	<Company>CxLogicDev</Company>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SendGrid" Version="9.25.1" />
+		<PackageReference Include="SendGrid.Extensions.DependencyInjection" Version="1.0.1" />		
+		<PackageReference Include="Cx-Utility-Images" Version="1.0.0.3" />
+	</ItemGroup>
+	
+</Project>

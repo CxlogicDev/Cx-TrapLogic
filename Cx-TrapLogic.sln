@@ -47,7 +47,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{F0867208
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cx-Utility-Images", "src\Utilities\Cx-Utility-Images\Cx-Utility-Images.csproj", "{15051BAE-5389-4BB5-A3E1-D3F00580D604}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cx-Utility-Images-Resize", "src\Utilities\Cx-Utility-Images-Resize\Cx-Utility-Images-Resize.csproj", "{066DB785-8D76-4690-AA68-490C89CD16F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cx-Utility-Images-Resize", "src\Utilities\Cx-Utility-Images-Resize\Cx-Utility-Images-Resize.csproj", "{066DB785-8D76-4690-AA68-490C89CD16F2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Messages", "Messages", "{C0CDA3DA-39A6-4478-B354-D97F7AFFB395}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cx-Email-SendGrid", "src\Messages\Cx-Email-SendGrid\Cx-Email-SendGrid.csproj", "{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,6 +107,10 @@ Global
 		{066DB785-8D76-4690-AA68-490C89CD16F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{066DB785-8D76-4690-AA68-490C89CD16F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{066DB785-8D76-4690-AA68-490C89CD16F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -125,6 +133,8 @@ Global
 		{FE87BF2A-6949-4146-B1A8-1799CAD7D072} = {7B401836-DA71-4605-82F8-5D074D52D909}
 		{15051BAE-5389-4BB5-A3E1-D3F00580D604} = {111F6A07-0088-40CD-95B1-99A6E77F7AAE}
 		{066DB785-8D76-4690-AA68-490C89CD16F2} = {111F6A07-0088-40CD-95B1-99A6E77F7AAE}
+		{C0CDA3DA-39A6-4478-B354-D97F7AFFB395} = {4CCFBED4-2317-43AD-AC78-1465AD4148B0}
+		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549} = {C0CDA3DA-39A6-4478-B354-D97F7AFFB395}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3006AF55-8AD7-420A-A053-9381E831CD02}
