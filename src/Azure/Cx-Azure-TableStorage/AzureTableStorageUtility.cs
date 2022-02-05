@@ -20,7 +20,8 @@ public static class TableStorageUtilityExtentions
         TableItem? table;
         try
         {
-             table = await tableAccess.Client.CreateTableIfNotExistsAsync(_tableName, cancellationToken);
+            var result = await tableAccess.Client.CreateTableIfNotExistsAsync(_tableName, cancellationToken);
+            table = result?.Value;
         }
         catch (Exception Ex)
         {
