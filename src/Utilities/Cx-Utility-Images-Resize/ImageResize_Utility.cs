@@ -42,6 +42,34 @@ public static class ImageResize_Utility
 
         return _Result;
     }
+
+    public static async Task<ImageResult> ImageUrlResult_ScaledByHeight(this HttpClient web, string ImagePath, int maxHeight = 250)
+    {
+
+        IImageFormat format;
+
+        ImageResult _UrlResult = await web.ImageUrlResult(ImagePath);
+
+        using Image image = Image.Load(_UrlResult.Data, out format);
+
+        image.Mutate(c => c.Resize(0, maxHeight));
+
+        using MemoryStream _Stream = new MemoryStream();
+
+        //image.ToBase64String
+
+        await image.SaveAsync(_Stream, format);
+
+        ImageResult _Result = new ImageResult(_UrlResult.FilePath, _UrlResult.MediaType, _Stream.ToArray(), true);
+
+        //ImageResult.get_Result_PreserveByteData(_UrlResult, _Stream.ToArray());//     _UrlResult new ImageResult()
+
+
+
+
+
+        return _Result;
+    }
     //*/
 
     /*
