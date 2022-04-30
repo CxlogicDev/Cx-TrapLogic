@@ -351,6 +351,11 @@ public static partial class DBContextUtility
 
             foreach (var prop in props)
             {
+                // Remove the Record added values
+                if (prop.Name.Equals("EqualityContract"))
+                    continue;
+
+
                 ct++;
                 try
                 {
@@ -365,7 +370,10 @@ public static partial class DBContextUtility
                 }
                 catch (Exception Ex)
                 {
-                    Console.WriteLine(Ex.ToString());
+                    //The follow removes the record type values
+                    if (!prop.Name.Equals("EqualityContract"))
+                        Console.WriteLine(Ex.ToString());
+                    
                 }
             }
 

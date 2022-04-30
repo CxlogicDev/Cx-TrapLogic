@@ -32,6 +32,11 @@ public static partial class DBContextUtility
                 o.SearchPredicate = SearchPredicate;
                 o.Model = Input_Obj;
             });
+
+            //Fix: No Update fields so a update cannot be ran and returns a null.
+            //This will call into the Db and get the record if is exists
+            if (record == null && SearchPredicate.isNotNull())
+                record = await entityObj.FirstOrDefaultAsync(SearchPredicate.DBContextErrorIfNull(true));
         }
         catch (DBContextContinueException) { 
             //Exception may be an update only error problem
