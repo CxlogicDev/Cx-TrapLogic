@@ -1,5 +1,4 @@
-﻿using CxUtility.Cx_Console;
-using CxUtility.Images;
+﻿using CxUtility.Images;
 using CxUtility.Images.Resizing;
 
 namespace Cx_TrapTestConsole;

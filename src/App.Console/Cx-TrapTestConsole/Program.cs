@@ -1,11 +1,12 @@
 ﻿global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
+global using CxUtility.Cx_Console;
 using Microsoft.EntityFrameworkCore;
 
-using CxUtility.Cx_Console;
 using Cx_TrapTestConsole;
 using CxAzure.TableStorage;
 using CxAzure.BlobStorage;
+
 
 /// <summary>
 /// Building and starting a CxConsle hosed project
@@ -14,7 +15,9 @@ await CxConsoleHostBuilder
     .CreateConsole_HostBuilder(args)
     .ConfigBuilder(cfgBld =>
     {
-      
+
+        cfgBld.AddJsonFile(Path.Combine("S:\\ApplicationConfigs", "ProjectTests", "LogicTester", "appsettings.json"), false);
+        
     })
     .ConfigureServices(ser =>
     {
@@ -28,6 +31,9 @@ await CxConsoleHostBuilder
         }
 
         ser.AddDbContext<CxEFCoreSqliteContext>(op => op.UseSqlite($"Data Source={CxEFCoreSqliteContext.sqliteTest};"));
+
+        
+        
 
         ser.AddHttpClient();
 

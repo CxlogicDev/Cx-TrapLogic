@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Azure\Cx-Azure-BlobStorage\Cx-Azure-BlobStorage.csproj" />
     <ProjectReference Include="..\..\Utilities\Cx-Utility-EFCoreData-Sqlite\Cx-Utility-EFCoreData-Sqlite.csproj" />
+    <ProjectReference Include="..\..\Utilities\Cx-Utility-EFCoreData\Cx-Utility-EFCoreData.csproj" />
     <ProjectReference Include="..\..\Utilities\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
     <ProjectReference Include="..\..\Utilities\Cx-Utility-Console\Cx-Utility-Console.csproj" />
     <ProjectReference Include="..\..\Azure\Cx-Azure-TableStorage\Cx-Azure-TableStorage.csproj" />
@@ -18,7 +19,9 @@
   </ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
 	</ItemGroup>
 </Project>

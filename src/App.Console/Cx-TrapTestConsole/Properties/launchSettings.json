@@ -11,6 +11,10 @@
     "Cx-Images": {
       "commandName": "Project",
       "commandLineArgs": "image resize -saveDir"
+    },
+    "Cx-EF-RecordTest": {
+      "commandName": "Project",
+      "commandLineArgs": "efcore q1-test"
     }
   }
 }
