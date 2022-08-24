@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+	<RootNamespace>CxUtility.Net</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<Version>1.0.0.17</Version>
+	<PackageId>Cx-Utility-Net</PackageId>
+	<Authors>Christifer</Authors>
+	<Company>CxLogicDev</Company>
+  </PropertyGroup>
+</Project>
