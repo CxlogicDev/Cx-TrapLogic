@@ -10,7 +10,7 @@
     <Company>CxLogicDev</Company>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.1" />
     <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.16" />
   </ItemGroup>
 </Project>
