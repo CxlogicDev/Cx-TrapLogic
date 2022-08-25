@@ -4,6 +4,17 @@ function Cx-Publish-ProjConfig {
         [string]
     )
     #>
+
+    Push-Location $PSScriptRoot
+
+    Push-Location ..\
+
+    $Myfile = [System.IO.Path]::Combine($PWD.Path, 'cs-Proj-Configure.psm1')
+
+    $myDir = 'cs-Proj-Configure'
+
+    Pop-Location
+    
     $selectValue = 0;
     $runCt = 0;
 
@@ -25,7 +36,6 @@ function Cx-Publish-ProjConfig {
 
             if($intValue -gt 0 -and $intValue -le $psModPaths.Count) {
                 $selectValue = $intValue;
-                Write-Host "Selection Found: $selectValue" -ForegroundColor Blue -BackgroundColor Black
             }
             else {
                 Write-Host "Invalid Seletion" -ForegroundColor Green -BackgroundColor Black
@@ -39,11 +49,14 @@ function Cx-Publish-ProjConfig {
     }
 
     if($selectValue -gt 0) {
-        Write-Host "Copying Module" -ForegroundColor Green -BackgroundColor Black
+        $toPath =  [System.IO.Path]::Combine($psModPaths[$selectValue - 1], $myDir)
+        Write-Host "Copying Module $Myfile To: $toPath" -ForegroundColor Green -BackgroundColor Black
     }
     else {
         Write-Host "No valid seletcion made to move module" -ForegroundColor Red -BackgroundColor Black
     }
+
+    Pop-Location
 }
 
 
