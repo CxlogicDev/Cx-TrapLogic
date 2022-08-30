@@ -9,9 +9,9 @@ function Cx-Publish-ProjConfig {
 
     Push-Location ..\
 
-    $Myfile = [System.IO.Path]::Combine($PWD.Path, 'cs-Proj-Configure.psm1')
-
     $myDir = 'cs-Proj-Configure'
+
+    $Myfile = [System.IO.Path]::Combine($PWD.Path, "$myDir.psm1")
 
     Pop-Location
     
@@ -38,11 +38,11 @@ function Cx-Publish-ProjConfig {
                 $selectValue = $intValue;
             }
             else {
-                Write-Host "Invalid Seletion" -ForegroundColor Green -BackgroundColor Black
+                Write-Host "Invalid Selection" -ForegroundColor Green -BackgroundColor Black
             }
         }
         else {
-            Write-Host "Invalid Seletion" -ForegroundColor Red -BackgroundColor Black
+            Write-Host "Invalid Selection" -ForegroundColor Red -BackgroundColor Black
         }
 
         $runCt++
@@ -50,7 +50,24 @@ function Cx-Publish-ProjConfig {
 
     if($selectValue -gt 0) {
         $toPath =  [System.IO.Path]::Combine($psModPaths[$selectValue - 1], $myDir)
-        Write-Host "Copying Module $Myfile To: $toPath" -ForegroundColor Green -BackgroundColor Black
+
+        if(Test-Path $psModPaths[$selectValue - 1]){
+            Push-Location $psModPaths[$selectValue - 1]
+
+            if(!Test-Path .\$myDir){
+                mkdir $myDir
+            }
+            else{
+                Remove-Item [System.IO.Path]::Combine($toPath, "$myDir.psm1") -Force
+            }
+
+            Write-Host "Copying Module $Myfile To: $toPath" -ForegroundColor Green -BackgroundColor Black
+
+            Copy-Item $Myfile $toPath 
+        }
+        else{
+            Write-Host "Invalid Path: $($psModPaths[$selectValue - 1])" -ForegroundColor Red -BackgroundColor Black    
+        }        
     }
     else {
         Write-Host "No valid seletcion made to move module" -ForegroundColor Red -BackgroundColor Black
