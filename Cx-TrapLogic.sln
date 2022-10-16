@@ -51,7 +51,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cx-Utility-Images-Resize", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Messages", "Messages", "{C0CDA3DA-39A6-4478-B354-D97F7AFFB395}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cx-Email-SendGrid", "src\Messages\Cx-Email-SendGrid\Cx-Email-SendGrid.csproj", "{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cx-Email-SendGrid", "src\Messages\Cx-Email-SendGrid\Cx-Email-SendGrid.csproj", "{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cx-Utility-Net", "src\Utilities\Cx-Utility-Net\Cx-Utility-Net.csproj", "{4F51D6CF-9003-4270-874D-FB98B52CB118}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts.ps", "scripts.ps", "{D0DF0D89-EA6D-4A4A-B090-C57312A8C9BA}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\cs-Proj-Configure.psm1 = scripts\cs-Proj-Configure.psm1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildPublish", "BuildPublish", "{D4C06A64-758A-49BB-9983-4AB46889B42D}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\BuildPublish\Publish-Scripts.ps1 = scripts\BuildPublish\Publish-Scripts.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -111,6 +123,10 @@ Global
 		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F51D6CF-9003-4270-874D-FB98B52CB118}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F51D6CF-9003-4270-874D-FB98B52CB118}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F51D6CF-9003-4270-874D-FB98B52CB118}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F51D6CF-9003-4270-874D-FB98B52CB118}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -135,6 +151,8 @@ Global
 		{066DB785-8D76-4690-AA68-490C89CD16F2} = {111F6A07-0088-40CD-95B1-99A6E77F7AAE}
 		{C0CDA3DA-39A6-4478-B354-D97F7AFFB395} = {4CCFBED4-2317-43AD-AC78-1465AD4148B0}
 		{015247CB-AB28-4A3D-A3C1-72D2D2BB3549} = {C0CDA3DA-39A6-4478-B354-D97F7AFFB395}
+		{4F51D6CF-9003-4270-874D-FB98B52CB118} = {111F6A07-0088-40CD-95B1-99A6E77F7AAE}
+		{D4C06A64-758A-49BB-9983-4AB46889B42D} = {D0DF0D89-EA6D-4A4A-B090-C57312A8C9BA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3006AF55-8AD7-420A-A053-9381E831CD02}

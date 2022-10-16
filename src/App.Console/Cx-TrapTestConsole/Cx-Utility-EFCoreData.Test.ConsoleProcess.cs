@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using CxUtility.EFCoreData;
-
+using System.Diagnostics.CodeAnalysis;
 
 namespace Cx_TrapTestConsole;
 
@@ -46,7 +46,7 @@ internal class Cx_Utility_EFCoreData : ConsoleBaseProcess
         }
         catch (Exception Ex)
         {
-
+            WriteOutput_Service.write_Lines(2, Ex.Message, Ex.ToString());
         }
 
 
@@ -81,6 +81,7 @@ public class CxEFCoreContext : DbContext
 {
     internal const string sqliteTest = "sql.test.db";
 
+    [AllowNull]
     public DbSet<Q1Test> QTests { get; set; }
 
     //public CxEFCoreContext(DbContextOptions<CxEFCoreSqliteContext> options) : base(options)

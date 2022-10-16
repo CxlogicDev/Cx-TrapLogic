@@ -35,7 +35,7 @@ internal class Cx_Utility_EFCoreData_Sqlite : ConsoleBaseProcess
 
         var name_referenceId = Guid.NewGuid().ToString();
 
-        var entity_Obj = context.QTests.AddUpdate_SqliteEntity_Async(o => {
+        var entity_Obj = context.QTests.ErrorIfNull().AddUpdate_SqliteEntity_Async(o => {
             o.Model = new QTest { id = 2, name = name_referenceId.ToUpper(), referenceId = name_referenceId.ToLower() };
             o.Search_Predicate = x => x.id == 2 || x.referenceId == name_referenceId.ToLower();
         });
