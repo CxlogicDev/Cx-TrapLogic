@@ -7,6 +7,23 @@ Push-Location $PSScriptRoot
 
 $rootScript = $PWD.ProviderPath
 
+class Tree_Branch_Referenece {	
+	
+	[string] $referenceType 
+
+    [string] $name 
+
+    [string] $version 
+
+    [bool] $isLocal = $false;
+	
+	Tree_Branch_Referenece([string] $Name, [string] $ReferenceType, [string] $Version = '') {
+		$this.name = $Name
+		$this.referenceType = $ReferenceType
+		$this.version = $Version
+	}
+}
+
 class Tree_Branch {
 	#< #Define the class. Try constructors, properties, or methods #>
 
@@ -20,6 +37,8 @@ class Tree_Branch {
 
     [bool] $Publish 
     [int] $Publish_Order 
+
+	[Tree_Branch_Referenece[]] $References = @()
 
 	Tree_Branch([string] $Project_Path) {
 		<# Initialize the class. Use $this to reference the properties of the instance you are creating #>
@@ -55,9 +74,35 @@ class Tree_Branch {
 		[xml]$doc = Get-Content -Path $this.Proj_Path
 
 		$this.Proj_Version = $doc.Project.PropertyGroup.Version
+
         $this.Proj_Framework = $doc.Project.PropertyGroup.TargetFramework
-        $this.Proj_Namespace = $doc.Project.PropertyGroup.RootNamespace
+        
+		$this.Proj_Namespace = $doc.Project.PropertyGroup.RootNamespace
+
+		foreach($node in $doc.ItemGroup.PackageReference){
+			Write-Host "Name: $($node.Include); Version: $($node.Version)"
+			#PackageReference($node.Include, $node.Version)
+		}	
+
+		foreach($node in $doc.ItemGroup.ProjectReference){
+			Write-Host "Name: $($node.Include); Version: $($node.Version)"
+			#ProjectReference($node.Include)
+		}
+
 	}
+
+	[void]PackageReference([string] $Name, [string] $Version) 
+	{# 'PackageReference'
+		$this.References += [Tree_Branch_Referenece]::new($Name, 'PackageReference', $Version)
+	}
+
+	[void] ProjectReference([string] $Name) 
+	{#'ProjectReference'
+		$this.References += [Tree_Branch_Referenece]::new($Name, 'ProjectReference')
+	}
+
+
+
 }
 
 
