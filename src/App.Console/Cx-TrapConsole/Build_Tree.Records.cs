@@ -10,7 +10,6 @@ public record Build_Tree
 {
     internal Dictionary<string, Tree_Branch> _Branches { get; set; } = new();
 
-
     public Tree_Branch? this[string name] => _Branches.TryGetValue(name, out Tree_Branch? branch) ? branch : null;
 
     public string? rootPath { get; set; }

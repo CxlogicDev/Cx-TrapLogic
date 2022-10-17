@@ -1,4 +1,7 @@
-function Cx-Publish-ProjConfig {
+function Cx-Publish-ProjConfigModule {
+    <#
+        This Will Publish the Under lining cs-Proj-Configure.psm1 
+    #>
     <#
     param (
         [string]

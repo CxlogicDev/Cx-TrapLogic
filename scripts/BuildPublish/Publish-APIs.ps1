@@ -5,7 +5,67 @@
 
 Push-Location $PSScriptRoot
 
+$rootScript = $PWD.ProviderPath
+
+class Tree_Branch {
+	#< #Define the class. Try constructors, properties, or methods #>
+
+
+	[string] $Proj_Path
+    [string] $Proj_Directory 
+    [string] $Proj_Name 
+    [string] $Proj_Namespace 
+    [string] $Proj_Version 
+    [string] $Proj_Framework 
+
+    [bool] $Publish 
+    [int] $Publish_Order 
+
+	Tree_Branch([string] $Project_Path) {
+		<# Initialize the class. Use $this to reference the properties of the instance you are creating #>
+		if($null -eq $Project_Path -or $Project_Path.Length -eq 0){
+			Write-Error -Message "The Project_Path is missing" -ErrorAction Stop
+		}
+
+		if(!(Test-Path $Project_Path)){
+			Write-Error -Message "The file: [$Project_Path] was not found" -ErrorAction Stop
+		}
+
+		$this.Proj_Path = $Project_Path
+
+		$this.Proj_Directory = (Get-ChildItem $Project_Path).Directory.FullName
+		$this.Proj_Name = (Get-ChildItem $Project_Path).Name
+
+		#Load the Properties 
+<#
+
+        $ProjectNode = doc["Project"];//["PropertyGroup"];
+        if (ProjectNode == null)
+            return;
+
+        var PropertyGroup = ProjectNode["PropertyGroup"];
+        if (PropertyGroup == null)
+            return;
+
+        Proj_Version = PropertyGroup["Version"]?.InnerText ?? string.Empty;
+        Proj_Framework = PropertyGroup["TargetFramework"]?.InnerText ?? string.Empty;
+        Proj_Name = Proj_Path?.Split(Path.DirectorySeparatorChar).Last().Split('.')[0] ?? throw new ArgumentNullException(nameof(Proj_Path));
+        Proj_Namespace = PropertyGroup["RootNamespace"]?.InnerText ?? string.Empty;
+#>
+		[xml]$doc = Get-Content -Path $this.Proj_Path
+
+		$this.Proj_Version = $doc.Project.PropertyGroup.Version
+        $this.Proj_Framework = $doc.Project.PropertyGroup.TargetFramework
+        $this.Proj_Namespace = $doc.Project.PropertyGroup.RootNamespace
+	}
+}
+
+
 function Cx-Publish-APIs {
+	<#
+		This will build a single API that passed in but is redundent at this point. 
+		This needs to have a action that finds and orders the parts  
+	#>
 	param (
         [string] $csProjDirectory
         ,[string] $nupkg_Dest
@@ -20,11 +80,12 @@ function Cx-Publish-APIs {
     }
 
     if($null -eq $nupkg_Dest){
-        $cmpPath = [System.IO.Path]::Combine()
+        #$cmpPath = [System.IO.Path]::Combine()
         <# The Cx Paths need to be added to the system to process the output to #>
         #if(Test-Path ) 
 
-
+		write-Host "Missing the destination Path -nupkg_Dest" -ForegroundColor Red -BackgroundColor Black
+		return 
     }
 
 	Push-Location $csProjDirectory
@@ -55,4 +116,35 @@ function Cx-Publish-APIs {
 			}
 		}
 	Pop-Location
+}
+
+
+function Cx-OrderProjects {
+	<#
+	param (
+		OptionalParameters
+	)
+	#>
+	
+	#push to the proper dirctory
+	Push-Location $rootScript
+
+		Push-Location ..\..\src
+
+			#$src = $PWD.Path
+			$csProjDirs = Get-ChildItem *.csproj -File -Recurse | Select DirectoryName
+
+			
+
+
+
+		Pop-Location
+
+	Pop-Location
+
+	
+
+	
+
+
 }
