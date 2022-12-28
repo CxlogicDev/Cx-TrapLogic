@@ -12,8 +12,8 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
+  </ItemGroup>  
   <ItemGroup>
-    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.16" />
+    <ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
   </ItemGroup>
 </Project>

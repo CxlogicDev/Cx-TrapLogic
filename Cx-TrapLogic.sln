@@ -62,7 +62,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts.ps", "scripts.ps", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildPublish", "BuildPublish", "{D4C06A64-758A-49BB-9983-4AB46889B42D}"
 	ProjectSection(SolutionItems) = preProject
+		scripts\BuildPublish\Publish-APIs.ps1 = scripts\BuildPublish\Publish-APIs.ps1
 		scripts\BuildPublish\Publish-Scripts.ps1 = scripts\BuildPublish\Publish-Scripts.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "configs", "configs", "{F674648F-19D4-472A-8ADC-D92E48890ABB}"
+	ProjectSection(SolutionItems) = preProject
+		src\Cx-TrapLogic.Config.json = src\Cx-TrapLogic.Config.json
 	EndProjectSection
 EndProject
 Global

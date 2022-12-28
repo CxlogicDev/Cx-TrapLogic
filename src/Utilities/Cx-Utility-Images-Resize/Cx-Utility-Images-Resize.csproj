@@ -9,11 +9,10 @@
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Cx-Utility-Images" Version="1.0.0.4" />
+  <ItemGroup>    
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
   </ItemGroup>
-  <!--<ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Cx-Utility-Images\Cx-Utility-Images.csproj" />
-  </ItemGroup>-->
+  </ItemGroup>
 </Project>

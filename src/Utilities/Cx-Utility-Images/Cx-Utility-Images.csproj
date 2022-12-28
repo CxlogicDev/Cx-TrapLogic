@@ -9,8 +9,10 @@
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Cx-Utility-Extensions" Version="1.0.0.16" />
+  <ItemGroup>    
     <!--<PackageReference Include="System.Drawing.Common" Version="6.0.0" />-->
   </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
+	</ItemGroup>
 </Project>
