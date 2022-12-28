@@ -1,0 +1,14 @@
+{
+  "buildTreeTemplate": {
+    "id": "",
+    "name": "",
+    "order": 0,
+    "version": "1.0.0.1",
+    "framework": "",
+    "module": "",
+    "path": ""
+  },
+  "buildTree": [
+
+  ]
+}

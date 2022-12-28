@@ -7,20 +7,30 @@ Push-Location $PSScriptRoot
 
 $rootScript = $PWD.ProviderPath
 
+#$csprojs = @{}
+#Get-ChildItem ..\..\src\*.csproj -Recurse | ForEach-Object { $csprojs.Add( $_.Name, $_.FullName) }
+
+$cs_projs = @()
+Get-ChildItem ..\..\src\*.csproj -Recurse | ForEach-Object { $cs_projs += [Tree_Branch]::new($_.FullName) }
+
+$cs_projs = $cs_projs | Where-Object { $_.Proj_PackageId.Length -gt 0}
+
+
+
 class Tree_Branch_Referenece {	
 	
 	[string] $referenceType 
 
     [string] $name 
 
-    [string] $version 
+    #[string] $version 
 
     [bool] $isLocal = $false;
 	
-	Tree_Branch_Referenece([string] $Name, [string] $ReferenceType, [string] $Version = '') {
+	Tree_Branch_Referenece([string] $Name, [string] $ReferenceType<#, [string] $Version = ''#>) {
 		$this.name = $Name
 		$this.referenceType = $ReferenceType
-		$this.version = $Version
+		#$this.version = $Version
 	}
 }
 
@@ -35,8 +45,14 @@ class Tree_Branch {
     [string] $Proj_Version 
     [string] $Proj_Framework 
 
+	[string] $Proj_PackageId
+	[string] $Proj_Authors
+	[string] $Proj_Company
+
     [bool] $Publish 
     [int] $Publish_Order 
+
+	#[xml]$docx #Test Field 
 
 	[Tree_Branch_Referenece[]] $References = @()
 
@@ -73,20 +89,30 @@ class Tree_Branch {
 #>
 		[xml]$doc = Get-Content -Path $this.Proj_Path
 
+		#$this.docx = $doc
+
 		$this.Proj_Version = $doc.Project.PropertyGroup.Version
 
         $this.Proj_Framework = $doc.Project.PropertyGroup.TargetFramework
         
 		$this.Proj_Namespace = $doc.Project.PropertyGroup.RootNamespace
 
-		foreach($node in $doc.ItemGroup.PackageReference){
+		$this.Proj_PackageId = $doc.Project.PropertyGroup.PackageId
+		$this.Proj_Authors = $doc.Project.PropertyGroup.Authors
+		$this.Proj_Company = $doc.Project.PropertyGroup.Company
+
+		<#
+		foreach($node in $doc.Project.ItemGroup.PackageReference){
 			Write-Host "Name: $($node.Include); Version: $($node.Version)"
 			#PackageReference($node.Include, $node.Version)
 		}	
+		#>
 
-		foreach($node in $doc.ItemGroup.ProjectReference){
-			Write-Host "Name: $($node.Include); Version: $($node.Version)"
-			#ProjectReference($node.Include)
+		foreach($node in $doc.Project.ItemGroup.ProjectReference){
+			if($null -ne $node.Include -or $node.Include.Length -gt 0){
+				Write-Host "[$($this.Proj_Name)] RefProj: $($node.Include);"
+				$this.ProjectReference($node.Include)
+			}
 		}
 
 	}
@@ -165,31 +191,39 @@ function Cx-Publish-APIs {
 
 
 function Cx-OrderProjects {
-	<#
+	
 	param (
-		OptionalParameters
+		[Tree_Branch[]] $branches
 	)
-	#>
-	
-	#push to the proper dirctory
-	Push-Location $rootScript
-
-		Push-Location ..\..\src
-
-			#$src = $PWD.Path
-			$csProjDirs = Get-ChildItem *.csproj -File -Recurse | Select DirectoryName
-
-			
-
-
-
-		Pop-Location
-
-	Pop-Location
-
 	
 
+	$cs_projs_order = @{}
+
+	$CxUtyExt = $branches | where { $_.Proj_PackageId -eq 'Cx-Utility-Extensions' }
+
+	if($null -eq $CxUtyExt){
+		throw new [System.InvalidOperationException] "Missing Cx-Utility-Extensions Project"
+	}
+
+	$cs_projs_order.Add(0, @())
+	$cs_projs_order[0] += $CxUtyExt 
+
+	foreach($branch in $branches | Where-Object { $_.References.Length -eq 0 -and $_.Proj_PackageId -ne $CxUtyExt.Proj_PackageId }){
+
+		$branch.Publish_Order = 1;
+		if(!$cs_projs_order.ContainsKey(1)){
+			$cs_projs_order.Add(1, @())
+		}
+		#else {
+			$cs_projs_order[1] += $branch
+		#}
+	}
 	
+
+	$cs_projs_order
+
+
+	#return $branches
 
 
 }
