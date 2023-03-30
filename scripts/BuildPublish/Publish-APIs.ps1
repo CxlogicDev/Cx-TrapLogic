@@ -2,7 +2,7 @@
 	Info: Publish Script for all application Library Projects
 	Make sure the ConfigureScript.psm1 has been loaded into one of your PS Script module paths 
 #>
-
+$dirSep = [System.IO.Path]::DirectorySeparatorChar
 Push-Location $PSScriptRoot
 
 $rootScript = $PWD.ProviderPath
@@ -11,7 +11,7 @@ $rootScript = $PWD.ProviderPath
 #Get-ChildItem ..\..\src\*.csproj -Recurse | ForEach-Object { $csprojs.Add( $_.Name, $_.FullName) }
 
 $cs_projs = @()
-Get-ChildItem ..\..\src\*.csproj -Recurse | ForEach-Object { $cs_projs += [Tree_Branch]::new($_.FullName) }
+Get-ChildItem "..$($dirSep)..$($dirSep)src$($dirSep)*.csproj" -Recurse | ForEach-Object { $cs_projs += [Tree_Branch]::new($_.FullName) }
 
 $cs_projs = $cs_projs | Where-Object { $_.Proj_PackageId.Length -gt 0}
 
@@ -197,7 +197,7 @@ function Cx-OrderProjects {
 	)
 	
 
-	$cs_projs_order = @{}
+	$cs_projs_order = @()
 
 	$CxUtyExt = $branches | where { $_.Proj_PackageId -eq 'Cx-Utility-Extensions' }
 
@@ -205,25 +205,85 @@ function Cx-OrderProjects {
 		throw new [System.InvalidOperationException] "Missing Cx-Utility-Extensions Project"
 	}
 
-	$cs_projs_order.Add(0, @())
-	$cs_projs_order[0] += $CxUtyExt 
-
-	foreach($branch in $branches | Where-Object { $_.References.Length -eq 0 -and $_.Proj_PackageId -ne $CxUtyExt.Proj_PackageId }){
-
-		$branch.Publish_Order = 1;
-		if(!$cs_projs_order.ContainsKey(1)){
-			$cs_projs_order.Add(1, @())
-		}
-		#else {
-			$cs_projs_order[1] += $branch
-		#}
-	}
+	[int]$ct = 1;
+	$CxUtyExt.Publish_Order = $ct
 	
 
-	$cs_projs_order
+	$cs_projs_order += $CxUtyExt #.Add($ct, $CxUtyExt)	
+
+	$temp_odr = @{}
+
+
+	$temp_odr.Add(0, @())
+
+	$temp_odr[0] += $CxUtyExt
+
+	foreach($branch in $branches | Where-Object { $_.Proj_PackageId -ne $CxUtyExt.Proj_PackageId }){
+
+		if($branch.Proj_PackageId -eq 'Cx-Utility-Extensions'){
+			Write-Host 'Skipping Project: Cx-Utility-Extensions' -ForegroundColor Yellow
+			continue;
+		}
+
+		if($branch.References.Length -eq 1 -and $branch.References[0].name -like "*$($dirSep)$($CxUtyExt.Proj_Name)" ){
+			$ct++
+			$branch.Publish_Order = $ct
+			$cs_projs_order += $branch
+			#$cs_projs_order.Add($ct, $branch)
+			continue;
+		}
+		elseif(!$temp_odr.ContainsKey($branch.References.Length)) {
+			write-Host 'New Branch being loaded'
+			$temp_odr.Add($branch.References.Length, @())
+		}
+
+		$temp_odr[$branch.References.Length] += $branch
+
+		#$branch.Publish_Order = $ct;
+		#$cs_projs_order.Add(1, @())
+
+		#if(!$cs_projs_order.ContainsKey(1)){
+		#	$cs_projs_order.Add($ct, @())
+		#}
+		#else {
+		#	$cs_projs_order[1] += $branch
+		#}
+	}
+
+
+	foreach($key in $temp_odr.Keys) {
+
+		#Write-Host "Key: $key" -ForegroundColor Red
+		$RefProjNames = @()
+		$cs_projs_order | foreach { $RefProjNames += $_.Proj_Name }
+		
+		foreach($keyBranch in $temp_odr[$key]){
+			Write-Host "[key:  $key; Branch: $($keyBranch.Proj_Name); Refs: $($keyBranch.References.Length)]" -ForegroundColor Red
+			
+			$RefProjs = @()
+			$keyBranch.reference | foreach { $RefProjs += $_.name }
+
+			if(($keyBranch.References | select {$_.name.Split($dirSep) | select -Last 1} ).Length -gt 0){
+				Write-Host 'I have Value'
+			}
+
+			Write-Host ''
+		}
+
+		Write-Host ''
+		#$temp_odr[$key] | where { $_.References[0].Proj_PackageId -ne $CxUtyExt.Proj_PackageId } | select 
+
+
+
+	}
+	
+	return $temp_odr
+	#return $cs_projs_order
 
 
 	#return $branches
 
 
 }
+
+$cs_projsOrd = Cx-OrderProjects $cs_projs

@@ -9,4 +9,7 @@
 	<Authors>Christifer</Authors>
 	<Company>CxLogicDev</Company>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
+  </ItemGroup>
 </Project>
