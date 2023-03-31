@@ -40,6 +40,10 @@ public static partial class CxExtensions //_LogicNumbers
         _ => "",
     };
 
+    /// <summary>
+    /// Creates an unchangeable array
+    /// </summary>
+    /// <param name="BaseVal">The Enum of the base value </param>
     internal static ImmutableArray<char> Allowed_LogicBaseValue(this LogicBaseValueTypes BaseVal) => BaseVal switch
     {
         LogicBaseValueTypes.Binary => allowed_BinaryBaseValues,
@@ -48,20 +52,6 @@ public static partial class CxExtensions //_LogicNumbers
         _ => throw new ArgumentOutOfRangeException("Not a valid Value"),
     };
 
-    /* ToDo: Evel if needed
-    /// <summary>
-    /// Supplies a leanding prefix to Base Values. [Binary: 0b; Hex: 0x; Integer: No Prefix supplied]
-    /// </summary>
-    /// <param name="code_value">The Bast Vaule Type</param>
-    /// <param name="useAltChar">An Alt Value to use</param>
-    public static string BaseValuePrefix(this LogicBaseValueTypes code_value) => code_value switch
-    {
-        LogicBaseValueTypes.Binary => new string(new[] { '0', 'b' }),
-        LogicBaseValueTypes.Hex => new string(new[] { '0', 'x' }),
-        _ => string.Empty
-    };
-    -----------------------------------------------------------------------------------------------------------------*/
-    
     /// <summary>
     /// Check to see if the value is a value of type {BaseValueTypes} coverts all char collections including strings
     /// </summary>

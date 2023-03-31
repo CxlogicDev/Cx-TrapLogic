@@ -18,18 +18,16 @@ public static partial class CxUtilityExtensions
     /// <param name="source">The IEnumerable tocycle through </param>
     /// <param name="dop">The Amount of processes to run at a time. Max of Environment.ProcessorCount</param>
     /// <param name="body">The processing function </param>
-    private static Task ForEachAsync<T>(this IEnumerable<T> source, int dop, Func<T, Task> body)
-    {
-        return Task.WhenAll(from partition in Partitioner.Create(source).GetPartitions(dop)
-                            select Task.Run(async delegate
-                            {
-                                using (partition)
-                                {
-                                    while (partition.MoveNext())
-                                    {
-                                        await body(partition.Current);
-                                    }
-                                }
-                            }));
-    }
+    private static Task ForEachAsync<T>(this IEnumerable<T> source, int dop, Func<T, Task> body) =>
+            Task.WhenAll(from partition in Partitioner.Create(source).GetPartitions(dop)
+                         select Task.Run(async delegate
+                         {
+                             using (partition)
+                             {
+                                 while (partition.MoveNext())
+                                 {
+                                     await body(partition.Current);
+                                 }
+                             }
+                         }));
 }
