@@ -1,3 +1,15 @@
+function Test-Number {
+    param (
+        [string] $testValue
+    )
+
+    if($testValue.Count -gt 0){
+        return ([System.Char[]]$testValue | Where-Object { ![System.Char]::IsDigit($_) }).Count -eq 0
+    }
+
+    return $false
+}
+
 function Cx-Publish-ProjConfigModule {
     <#
         This Will Publish the Under lining cs-Proj-Configure.psm1 
@@ -34,7 +46,7 @@ function Cx-Publish-ProjConfigModule {
 
         Write-Host "Selection: $val" -ForegroundColor Yellow -BackgroundColor Black
 
-        if(Test-IsNumber -testValue $val) {
+        if(Test-Number -testValue $val) {
             $intValue = [int]$val
 
             if($intValue -gt 0 -and $intValue -le $psModPaths.Count) {
@@ -56,8 +68,10 @@ function Cx-Publish-ProjConfigModule {
 
         if(Test-Path $psModPaths[$selectValue - 1]){
             Push-Location $psModPaths[$selectValue - 1]
+            
+            $test = [System.IO.Path]::Combine($PWD.Path, $myDir)
 
-            if(!Test-Path .\$myDir){
+            if(!([System.IO.Directory]::Exists($test))){
                 mkdir $myDir
             }
             else{
@@ -80,6 +94,6 @@ function Cx-Publish-ProjConfigModule {
 }
 
 
-
+#Cx-Publish-ProjConfigModule
 
 
