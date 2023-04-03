@@ -5,17 +5,10 @@
 $dirSep = [System.IO.Path]::DirectorySeparatorChar
 Push-Location $PSScriptRoot
 
-$rootScript = $PWD.ProviderPath
-
-#$csprojs = @{}
-#Get-ChildItem ..\..\src\*.csproj -Recurse | ForEach-Object { $csprojs.Add( $_.Name, $_.FullName) }
-
 $cs_projs = @()
 Get-ChildItem "..$($dirSep)..$($dirSep)src$($dirSep)*.csproj" -Recurse | ForEach-Object { $cs_projs += [Tree_Branch]::new($_.FullName) }
 
 $cs_projs = $cs_projs | Where-Object { $_.Proj_PackageId.Length -gt 0}
-
-
 
 class Tree_Branch_Referenece {	
 	
@@ -110,7 +103,7 @@ class Tree_Branch {
 
 		foreach($node in $doc.Project.ItemGroup.ProjectReference){
 			if($null -ne $node.Include -or $node.Include.Length -gt 0){
-				Write-Host "[$($this.Proj_Name)] RefProj: $($node.Include);"
+				#Write-Host "[$($this.Proj_Name)] RefProj: $($node.Include);"
 				$this.ProjectReference($node.Include)
 			}
 		}
@@ -132,7 +125,7 @@ class Tree_Branch {
 }
 
 
-function Cx-Publish-APIs {
+function Cx-Publish-API {
 	<#
 		This will build a single API that passed in but is redundent at this point. 
 		This needs to have a action that finds and orders the parts  
@@ -189,15 +182,34 @@ function Cx-Publish-APIs {
 	Pop-Location
 }
 
+function Cx-Publish-AllAPIs {
+	param (
+		[Tree_Branch[]] $OrderedBranches
+		,[string] $nupkg_Dest
+		,[switch] $MinorVerIncrease
+		,[switch] $MajorVerIncrease
+		,[switch] $PatchVerIncrease
+	)
+
+	
+	if(!$MinorVerIncrease -and !$MajorVerIncrease -and !$PatchVerIncrease){
+		Write-Host "No work was done please select the Release type" -ForegroundColor Red
+		Write-Host "`t-PatchVerIncrease for a Patch Release" -ForegroundColor Red
+		Write-Host "`t-MinorVerIncrease for a Minor Version Release" -ForegroundColor Red
+		Write-Host "`t-MajorVerIncrease for a Major Version Release" -ForegroundColor Red
+		return;
+	}
+	
+	Write-Host "Processing Bransaches" -ForegroundColor Gree
+	$OrderedBranches | Sort-Object -Property Publish_Order | Select-Object -Property Publish_Order,Proj_Name | Format-Table -AutoSize
+}
+
 
 function Cx-OrderProjects {
 	
 	param (
 		[Tree_Branch[]] $branches
 	)
-	
-
-	$cs_projs_order = @()
 
 	$CxUtyExt = $branches | where { $_.Proj_PackageId -eq 'Cx-Utility-Extensions' }
 
@@ -208,15 +220,20 @@ function Cx-OrderProjects {
 	[int]$ct = 1;
 	$CxUtyExt.Publish_Order = $ct
 	
+	#The C# project branches to hold
+	$cs_projs_order = @()
 
 	$cs_projs_order += $CxUtyExt #.Add($ct, $CxUtyExt)	
 
+	#Temp Hash Table to hold an array of projects with number of References used
 	$temp_odr = @{}
 
-
+	#The fist for the base project [0] = "Cx-Utility-Extensions".
 	$temp_odr.Add(0, @())
 
 	$temp_odr[0] += $CxUtyExt
+
+	$temp_odr.Add(1, @())
 
 	foreach($branch in $branches | Where-Object { $_.Proj_PackageId -ne $CxUtyExt.Proj_PackageId }){
 
@@ -229,61 +246,104 @@ function Cx-OrderProjects {
 			$ct++
 			$branch.Publish_Order = $ct
 			$cs_projs_order += $branch
-			#$cs_projs_order.Add($ct, $branch)
+			$temp_odr[1] += $branch
+			Write-Host "[Ordered <> $($branch.Proj_Name)] Has Order at $ct" -ForegroundColor Green
 			continue;
 		}
-		elseif(!$temp_odr.ContainsKey($branch.References.Length)) {
+		elseif(!$temp_odr.ContainsKey(($branch.References.Length + 1))) {
 			write-Host 'New Branch being loaded'
-			$temp_odr.Add($branch.References.Length, @())
+			$temp_odr.Add(($branch.References.Length + 1), @())
 		}
 
-		$temp_odr[$branch.References.Length] += $branch
-
-		#$branch.Publish_Order = $ct;
-		#$cs_projs_order.Add(1, @())
-
-		#if(!$cs_projs_order.ContainsKey(1)){
-		#	$cs_projs_order.Add($ct, @())
-		#}
-		#else {
-		#	$cs_projs_order[1] += $branch
-		#}
+		$temp_odr[($branch.References.Length + 1)] += $branch	
 	}
 
 
-	foreach($key in $temp_odr.Keys) {
+	$maxKey = 2;
+	$curMaxKey = 0;
 
-		#Write-Host "Key: $key" -ForegroundColor Red
-		$RefProjNames = @()
-		$cs_projs_order | foreach { $RefProjNames += $_.Proj_Name }
-		
-		foreach($keyBranch in $temp_odr[$key]){
-			Write-Host "[key:  $key; Branch: $($keyBranch.Proj_Name); Refs: $($keyBranch.References.Length)]" -ForegroundColor Red
-			
-			$RefProjs = @()
-			$keyBranch.reference | foreach { $RefProjs += $_.name }
+	while ($maxKey -gt $curMaxKey) {
+		$curMaxKey = $maxKey
+		Write-Host "Looping Max Key: $maxKey" -ForegroundColor Yellow
 
-			if(($keyBranch.References | select {$_.name.Split($dirSep) | select -Last 1} ).Length -gt 0){
-				Write-Host 'I have Value'
+		foreach($key in $temp_odr.Keys | Sort-Object) {
+
+			if($key -lt $curMaxKey){
+				Write-Host "[Skipped key:  $key]" -ForegroundColor Yellow
+				continue;
 			}
 
-			Write-Host ''
+			$nextKey = ($key + 1);
+
+			$RefProjNames = @()
+			$cs_projs_order | ForEach-Object { $RefProjNames += $_.Proj_Name }
+			
+			foreach($keyBranch in $temp_odr[$key]){
+				Write-Host "[key:  $key; Branch: $($keyBranch.Proj_Name); Refs: $($keyBranch.References.Length)]" -ForegroundColor Yellow
+				
+				if($keyBranch.References.Length -eq 1 ){				
+					$refNow = ($RefProjNames | Where-Object { $keyBranch.References[0].name -like "*$($dirSep)$($_)" })
+					
+					if($null -ne $refNow){
+						$ct++
+						$keyBranch.Publish_Order = $ct
+						$cs_projs_order += $keyBranch
+						Write-Host "[Ordered <> $($branch.Proj_Name)] Has Order at $ct" -ForegroundColor Green
+						continue;
+					}
+					elseif(!$temp_odr.ContainsKey($nextKey)) {
+						write-Host 'New Branch being loaded'
+						$temp_odr.Add($nextKey, @())
+					}
+
+					$maxKey = $nextKey
+					$temp_odr[$nextKey] += $keyBranch
+					Write-Host "[Reordered <> $($branch.Proj_Name)] was reorder to Key: $nextKey" -ForegroundColor Yellow
+					continue;
+				}
+
+				$RefProjs = @()
+
+				foreach($keyRef in $keyBranch.reference){
+
+					$refNow = ($RefProjNames | Where-Object { $keyRef.name -like "*$($dirSep)$($_)" })
+					$RefProjs += $keyRef
+				}
+
+				if($RefProjs.Length -eq $keyBranch.reference.Length){
+					$ct++
+					$keyBranch.Publish_Order = $ct
+					$cs_projs_order += $keyBranch
+					Write-Host "[Ordered <> $($branch.Proj_Name)] Has Order at $ct" -ForegroundColor Green
+				}
+				elseif($RefProjs.Length -lt $keyBranch.reference){
+					if(!$temp_odr.ContainsKey($nextKey)) {
+						write-Host 'New Branch being loaded'
+						$temp_odr.Add($nextKey, @())
+					}
+
+					$maxKey = $nextKey
+					$temp_odr[$nextKey] += $keyBranch
+					Write-Host "[Reordered <> $($branch.Proj_Name)] was reorder to Key: $nextKey" -ForegroundColor Yellow
+				}
+				else {
+					Write-Host "[Error <> $($keyBranch.Proj_Name)] Problem with Reference Values " -ForegroundColor Red
+				}
+			}
+
+			Write-Host ''			
 		}
 
-		Write-Host ''
-		#$temp_odr[$key] | where { $_.References[0].Proj_PackageId -ne $CxUtyExt.Proj_PackageId } | select 
-
-
+		if($maxKey -gt $curMaxKey){
+			Write-Host "New Max Key: $maxKey" -ForegroundColor Yellow
+		}
+		else{
+			Write-Host "Finished Looping Max Key: $maxKey" -ForegroundColor Yellow
+		}
 
 	}
-	
-	return $temp_odr
-	#return $cs_projs_order
 
-
-	#return $branches
-
-
+	return $cs_projs_order
 }
 
 $cs_projsOrd = Cx-OrderProjects $cs_projs
