@@ -143,7 +143,7 @@ function Cx-Publish-API {
         Write-Host "Cannot Find Directory Path: $csProjDirectory" -BackgroundColor Black -ForegroundColor Red
     }
 
-    if($null -eq $nupkg_Dest){
+    if($null -eq $nupkg_Dest -and !($IncreaseOnly)){
         #$cmpPath = [System.IO.Path]::Combine()
         <# The Cx Paths need to be added to the system to process the output to #>
         #if(Test-Path ) 
@@ -200,8 +200,25 @@ function Cx-Publish-AllAPIs {
 		return;
 	}
 	
-	Write-Host "Processing Bransaches" -ForegroundColor Gree
-	$OrderedBranches | Sort-Object -Property Publish_Order | Select-Object -Property Publish_Order,Proj_Name | Format-Table -AutoSize
+	Write-Host "Current Branches" -ForegroundColor Yellow
+	$OrderedBranches | Sort-Object -Property Publish_Order | Select-Object -Property Publish_Order,Proj_Name,Proj_Version | Format-Table -AutoSize
+
+	#Process The Output
+	$OrderedBranches | Sort-Object -Property Publish_Order | ForEach-Object { Cx-Publish-API -csProjDirectory $_.Proj_Directory -nupkg_Dest $nupkg_Dest }
+
+	#update the versions
+	if($MajorVerIncrease){
+		$OrderedBranches | Sort-Object -Property Publish_Order | ForEach-Object { Cx-Publish-API -csProjDirectory $_.Proj_Directory -nupkg_Dest $nupkg_Dest -IncreaseOnly -MajorVerIncrease }	
+	}
+	if($MinorVerIncrease){
+		$OrderedBranches | Sort-Object -Property Publish_Order | ForEach-Object { Cx-Publish-API -csProjDirectory $_.Proj_Directory -nupkg_Dest $nupkg_Dest -IncreaseOnly -MinorVerIncrease }
+	}
+	elseif($PatchVerIncrease){
+		$OrderedBranches | Sort-Object -Property Publish_Order | ForEach-Object { Cx-Publish-API -csProjDirectory $_.Proj_Directory -nupkg_Dest $nupkg_Dest -IncreaseOnly -PatchVerIncrease }
+	}
+	
+	Write-Host "`nProcessed Branches" -ForegroundColor Green
+	$OrderedBranches | Sort-Object -Property Publish_Order | Select-Object -Property Publish_Order,Proj_Name,Proj_Version | Format-Table -AutoSize
 }
 
 
