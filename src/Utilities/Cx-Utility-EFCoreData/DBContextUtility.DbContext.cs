@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data;
+using Microsoft.Extensions.Logging;
 
 namespace CxUtility.EFCoreData;
 
@@ -291,7 +292,7 @@ public static partial class DBContextUtility
     /// <param name="ctx">The Context used</param>
     /// <param name="CleanChangeTracker">Tell The save process to clean The Change Tracker after saved. Errors will Automatically Clean Tracker</param>
     /// <returns> -1: No Changes in tracker; else the number of changed records. </returns>
-    public static async Task<int> SaveChangesCleanTrackerAsync(this DbContext ctx, bool CleanChangeTracker = false)
+    public static async Task<int> SaveChangesCleanTrackerAsync(this DbContext ctx, bool CleanChangeTracker = false, ILogger? _logger = default)
     {
         int ct;
 
@@ -311,7 +312,7 @@ public static partial class DBContextUtility
         catch (Exception Ex)
         {
             ctx?.ChangeTracker.Clear();
-            Console.WriteLine(Ex.ToString());
+            _logger?.LogError(Ex, Ex.Message);
             throw;
         }
 
@@ -335,7 +336,7 @@ public static partial class DBContextUtility
     /// </summary>
     /// <typeparam name="T">The object for the list</typeparam>
     /// <returns>A list of mapped objects</returns>
-    private static IList<T> MapToList<T>(this DbDataReader dr)
+    private static IList<T> MapToList<T>(this DbDataReader dr, ILogger? _logger = default)
     {
         var objList = new List<T>();
         var props = typeof(T).GetRuntimeProperties();
@@ -352,7 +353,7 @@ public static partial class DBContextUtility
             foreach (var prop in props)
             {
                 // Remove the Record added values
-                if (prop.Name.Equals("EqualityContract"))
+                if (prop.Name.Equals("EqualityContract", StringComparison.OrdinalIgnoreCase))
                     continue;
 
 
@@ -372,7 +373,7 @@ public static partial class DBContextUtility
                 {
                     //The follow removes the record type values
                     if (!prop.Name.Equals("EqualityContract"))
-                        Console.WriteLine(Ex.ToString());
+                        _logger?.LogError(Ex, Ex.Message);
                     
                 }
             }

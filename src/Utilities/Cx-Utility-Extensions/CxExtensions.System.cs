@@ -27,14 +27,12 @@ public static partial class CxExtensions
     /// Quick null Object Check. 
     /// </summary>
     /// <param name="obj"></param>
-    /// <returns></returns>
     public static bool isNull([NotNullWhen(false)] this object? Vanity_obj) => Vanity_obj is null;
 
     /// <summary>
     /// Quick not null Object Check.
     /// </summary>
     /// <param name="Vanity_obj"></param>
-    /// <returns></returns>
     public static bool isNotNull([NotNullWhen(true)] this object? Vanity_obj) => Vanity_obj is not null;
 
     /// <summary>
@@ -80,10 +78,10 @@ public static partial class CxExtensions
     public static T? Error_IfNotValid<T>(this T? obj, Func<T?, bool> validation, Exception? optionalexception = null)
     {
         //Test Null        
-        _ = validation ?? throw (optionalexception ?? new ArgumentNullException(nameof(validation)));
+        _ = validation ?? throw new ArgumentNullException(nameof(validation));
 
         if (!validation(obj))
-            throw new InvalidOperationException(message: "The object validate was invalid.");
+            throw optionalexception ?? new InvalidOperationException(message: "The object validate was invalid.");
 
         return obj;
     }
