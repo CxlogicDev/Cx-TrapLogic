@@ -4,7 +4,7 @@
     <RootNamespace>CxAzure.TableStorage</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.10</Version>
+    <Version>1.0.0.11</Version>
     <PackageId>Cx-Azure-TableStorage</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Data.Tables" Version="12.6.1" />
   </ItemGroup>
-	<ItemGroup>
-		<ProjectReference Include="..\..\Utilities\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Utilities\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
+  </ItemGroup>
 </Project>

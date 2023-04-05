@@ -4,15 +4,15 @@
     <RootNamespace>CxUtility.Images</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.5</Version>
+    <Version>1.0.0.6</Version>
     <PackageId>Cx-Utility-Images</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
-  <ItemGroup>    
+  <ItemGroup>
     <!--<PackageReference Include="System.Drawing.Common" Version="6.0.0" />-->
   </ItemGroup>
-	<ItemGroup>
-		<ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
+  </ItemGroup>
 </Project>

@@ -4,17 +4,17 @@
     <RootNamespace>CxUtility.EFCoreData.SQLite</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.9</Version>
+    <Version>1.0.0.10</Version>
     <PackageId>Cx-Utility-EFCoreData-Sqlite</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
-  <ItemGroup>    
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0" />
     <!--<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.0" />-->
   </ItemGroup>
   <ItemGroup>
-	  <ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
-	</ItemGroup>
+    <ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
+  </ItemGroup>
 </Project>

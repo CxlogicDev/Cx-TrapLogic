@@ -5,14 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <RootNamespace>CxUtility.AspNetWeb</RootNamespace>
-    <Version>1.0.0.10</Version>
+    <Version>1.0.0.11</Version>
     <PackageId>Cx-Utility-AspNetWeb</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>  
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cx-Utility-Extensions\Cx-Utility-Extensions.csproj" />
   </ItemGroup>
