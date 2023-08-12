@@ -71,6 +71,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "configs", "configs", "{F674
 		src\Cx-TrapLogic.Config.json = src\Cx-TrapLogic.Config.json
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".net7", ".net7", "{6C718DE5-74B0-4128-97A6-80F76CAF5DEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

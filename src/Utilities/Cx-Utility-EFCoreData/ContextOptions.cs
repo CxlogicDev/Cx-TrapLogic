@@ -175,3 +175,100 @@ public static partial class DBContextUtility
 
 }
 
+public class ContextEntityOptions<T> where T : class, new()
+{
+    /// <summary>
+    /// The Action that will be taken.
+    /// </summary>
+    internal EntityActions EntityAction { get; set; } = EntityActions._;
+
+    /// <summary>
+    /// The DbContext object
+    /// </summary>
+    public DbContext? DatabaseContext { get; }
+
+    /// <summary>
+    /// Check to see if there is Content To save
+    /// </summary>
+    //public bool hasSaveContent => ((EntityAction & EntityActions.Save_Enity) == EntityActions.Save_Enity) && !DatabaseContext.isNull() && DatabaseContext.ChangeTracker.HasChanges();
+
+    public ContextEntityOptions(DbContext DatabaseContext, Action<ContextEntityOptions<T>> SetOptions) : this(SetOptions)
+    {
+        this.DatabaseContext = DatabaseContext;
+
+        //EntityActions EntityAction,
+    }
+
+    public ContextEntityOptions(Action<ContextEntityOptions<T>> SetOptions)
+    {
+        //SkipProperties = SkipProperties ?? new List<string>();
+        if (SetOptions == default)
+            throw new DBContextStopException($"The {nameof(SetOptions)} options must be set and cannot be null ");
+
+        SetOptions?.Invoke(this);
+
+        //if (EntityAction == EntityActions._)
+        //    throw new DBContextStopException("You need to Choose an Entity Action");
+
+        if (Model is null)
+        {
+            string log_Message = $"The Supplied Model of type: {typeof(T).Name} that is being {EntityAction} is null or missing.";
+            logger?.LogError(message: log_Message);
+            throw new DBContextStopException($"{nameof(ContextOptions<T>)}.{nameof(Model)} cannot be null!!!!");
+        }
+
+        if ((new[] { EntityActions.Update_Entity, EntityActions.Add_Update_Entity/*, EntityActions.Update_Save_Entity, EntityActions.Add_Update_Save_Entity*/ }).Contains(EntityAction))
+        {
+            if (SearchPredicate == default)
+            {
+                string log_Message = $"The Update Cannot be done because the {nameof(SearchPredicate)} is null or missing.";
+                logger?.LogError(message: log_Message);
+                log_Message = $"You need to supply an {nameof(SearchPredicate)} so that the entity that is being updated can be found. ";
+                throw new DBContextContinueException(log_Message);
+            }
+
+            if (!(UpdateFields?.Count > 0))
+            {
+                string log_Message = $"You have Choosen an Update Action but did not suplly any UpdateFields. No Update can be performed";
+                logger?.LogWarning(message: log_Message);
+                IsValid = IsValid && (EntityAction == EntityActions.Update_Entity /*|| EntityAction == EntityActions.Update_Save_Entity*/);
+            }
+        }
+    }
+
+    /// <summary>
+    /// A logger object
+    /// </summary>
+    public ILogger? logger { get; set; }
+
+    /// <summary>
+    /// Tell the function to save the update back to the database. Default is False.
+    /// </summary>
+    public bool SaveEnityAfterUpdate { get; set; } = false;
+
+    /// <summary>
+    /// The object to update
+    /// </summary>
+    public T Model { get; set; }
+
+    [property: System.Diagnostics.CodeAnalysis.NotNullIfNotNull("SearchPredicate")]
+    /// <summary>
+    /// The Search Predicate to pill 
+    /// </summary>    
+    public Expression<Func<T, bool>>? SearchPredicate { get; set; }
+
+    /// <summary>
+    /// Tells the context what properties to skip in the update
+    /// </summary>
+    public IList<string> SkipProperties { get; set; } = new List<string>();
+
+    /// <summary>
+    /// The fields that are allowed to be updated
+    /// </summary>
+    public IList<string> UpdateFields { get; set; } = new List<string>();
+
+    /// <summary>
+    /// Currently: False if Update only without Update Fields.
+    /// </summary>
+    public bool IsValid { get; private set; } = true;   
+}
