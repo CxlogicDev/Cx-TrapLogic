@@ -196,8 +196,15 @@ public static partial class DBContextUtility
                     await entityObj.AsNoTracking().Where(request.SearchPredicate)
                     .ToArrayAsync();
 
-                //Error if multiple Entityies are found
-                records.Error_IfNotValid(v => v.isNull() || v.Length < 2, new DBContextMultipleEntityException("Multiple Entities Found but this method can only Process a single entity update. Please change your search perdicate to get a single entity"));
+                if(records.Length > 1)
+                {
+                    //Error if multiple Entityies are found
+                    result._errorMessages.Add("Multiple Entities Found but this method can only Process a single entity update. Please change your search perdicate to get a single entity");
+                    result.Status = EntityResult<T>.EntityActionStatuses.Error;
+                    return result;
+                }
+
+                records.Error_IfNotValid(v => v.isNull() || v.Length < 2, new DBContextMultipleEntityException());
 
                 T? record = records.FirstOrDefault();
 
@@ -210,14 +217,18 @@ public static partial class DBContextUtility
                     entityObj.Add(record);
 
                     result.EntityModel = record.ModelCopy();
-                    result.Status = EntityResult<T>.EntityActionStatuses.Add_New;
+                    result.Status = EntityResult<T>.EntityActionStatuses.Add;
                     result.ChangeFields = record.GetType().GetProperties().Select(s => s.Name).ToArray();
 
 
-                    return new(record, UpdateEntityStatuses.Add, Array.Empty<string>());
+                    return result;
                 }
-                else if (!(request.UpdateProperties?.Count > 0))
-                    return new(record, UpdateEntityStatuses.Update, Array.Empty<string>());
+                else if (!(request.UpdateProperties.Count > 0) && !(request.SkipProperties.Count > 0))
+                {
+                    result.EntityModel = record.ModelCopy();
+                    result.Status = EntityResult<T>.EntityActionStatuses.Update_Not_Processed;
+                    return result;
+                }
 
                 List<string> SkipFields = new(request.SkipProperties);
 
@@ -434,13 +445,16 @@ public class EntityResult<T> where T : class, new()
     /// <summary>
     /// Process Response Status
     /// </summary>
-    public enum EntityActionStatuses { Not_Processed, Add_New, Update_Not_Processed, Update }
+    public enum EntityActionStatuses { Not_Processed, Error, Add, Update_Not_Processed, Update }
 
     public EntityActionStatuses Status { get; internal set; } = EntityActionStatuses.Not_Processed;
 
     public T? EntityModel { get; internal set; }
 
     public string[] ChangeFields { get; internal set; }
+
+    public string[] ErrorMessages => _errorMessages.ToArray();
+    internal List<string> _errorMessages { get; } = new();
 }
 
 
