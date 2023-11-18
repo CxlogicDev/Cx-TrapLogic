@@ -1,6 +1,7 @@
 <#Process Cs Project Files#>
+$cpcfgxDS = [System.IO.Path]::DirectorySeparatorChar
 
-$PackDir = ".\bin\Release\publish\"
+$PackDir = ".$($cpcfgxDS)bin$($cpcfgxDS)Release$($cpcfgxDS)publish$($cpcfgxDS)"
 
 $DotPrefix = '..............................'
 $donePrefix =       "[Done].......$DotPrefix"
@@ -33,11 +34,11 @@ function Get-Cs-Project-version {
 
     Push-Location $CsProjDir
 
-    $csProj = ".\*.csproj"
+    $csProj = ".$($cpcfgxDS)*.csproj"
 
     $latest = Get-ChildItem $csProj | Select-Object -First 1
 
-    $csProj = ".\$($latest.Name)"
+    $csProj = ".$($cpcfgxDS)$($latest.Name)"
 
     if(!(Test-Path $csProj)){        
         Write-Host "$donePrefix No Project File Found." -ForegroundColor red -BackgroundColor Black
@@ -79,11 +80,11 @@ function Get-Cs-Project-PackageId {
 
     Push-Location $CsProjDir
 
-    $csProj = ".\*.csproj"
+    $csProj = ".$($cpcfgxDS)*.csproj"
 
     $latest = Get-ChildItem $csProj | Select-Object -First 1
 
-    $csProj = ".\$($latest.Name)"
+    $csProj = ".$($cpcfgxDS)$($latest.Name)"
 
     if(!(Test-Path $csProj)){        
         Write-Host "$donePrefix No Project File Found." -ForegroundColor red -BackgroundColor Black
@@ -126,11 +127,11 @@ function Update-Cs-Project-Version {
 
     Write-Host "$startingPrefix Pulling project Version" -ForegroundColor Yellow -BackgroundColor Black
 
-    $csProj = ".\*.csproj"
+    $csProj = ".$($cpcfgxDS)*.csproj"
 
     $latest = Get-ChildItem $csProj | Select-Object -First 1
 
-    $csProj = ".\$($latest.Name)"
+    $csProj = ".$($cpcfgxDS)$($latest.Name)"
 
     if(Test-Path $csProj){
         Write-Host "$ProcessingPrefix Update to Project Version."         
@@ -220,10 +221,10 @@ function Pack-Cs-Project {
 
             Write-Host "$donePrefix Packing $constTxt" -ForegroundColor Yellow -BackgroundColor Black
 
-			#Push-Location .\bin\Release\
+			#Push-Location ".$($cpcfgxDS)bin$($cpcfgxDS)Release$($cpcfgxDS)"
 			if((Test-Path "$($PackDir)$PackageId.$version.nupkg") -and (Test-Path $nupkg_Dest)) {
 				Move-Item "$($PackDir)$PackageId.$version.nupkg" -Destination $nupkg_Dest
-				$UpdateVersion = Test-Path "$nupkg_Dest\$PackageId.$version.nupkg"
+				$UpdateVersion = Test-Path "$nupkg_Dest$($cpcfgxDS)$PackageId.$version.nupkg"
 			}
 			#Pop-Location
 
