@@ -161,6 +161,7 @@ public static partial class DBContextUtility
 
     */
 
+    /*-------------------------------------------------Entity Action not ready ---->ToDo: Finish Redefine and process
 
     /// <summary>
     /// Runs a Async Call that updates only on the context
@@ -238,7 +239,7 @@ public static partial class DBContextUtility
                         .Where(w => !request.UpdateProperties.Any(a => a.Equals(w.Name, StringComparison.CurrentCultureIgnoreCase)))
                         .Select(s => s.Name));
 
-                result.UpdateFields = request.Model
+                result.ChangeFields = request.Model
                     .ModelUpdateFields(record, SkipFields.ToArray())
                     .ToArray();
 
