@@ -131,7 +131,6 @@ class Tree_Branch {
 
 }
 
-
 function Cx-Publish-API {
 	<#
 		This will build a single API that passed in but is redundent at this point. 
@@ -227,7 +226,6 @@ function Cx-Publish-AllAPIs {
 	Write-Host "`nProcessed Branches" -ForegroundColor Green
 	$OrderedBranches | Sort-Object -Property Publish_Order | Select-Object -Property Publish_Order,Proj_Name,Proj_Version | Format-Table -AutoSize
 }
-
 
 function Cx-OrderProjects {
 	

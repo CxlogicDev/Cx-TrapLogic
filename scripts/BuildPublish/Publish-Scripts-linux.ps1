@@ -50,7 +50,7 @@ function Test-Number {
 
     while ($selectValue -eq 0 -and $runCt -lt 5) {
 
-        #Write-Host "Which Number location would yoou like to save the Module too" -ForegroundColor Yellow -BackgroundColor Black
+        #Write-Host "Which Number location would yoou like to save the Module to" -ForegroundColor Yellow -BackgroundColor Black
         for ($i = 0; $i -lt $psModPaths.Count; $i++) {
             Write-Host "[$($i+1)] - $($psModPaths[$i])" -ForegroundColor Yellow -BackgroundColor Black
         }
