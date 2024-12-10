@@ -1,7 +1,7 @@
 <#Process Cs Project Files#>
 $cpcfgxDS = [System.IO.Path]::DirectorySeparatorChar
 
-$PackDir = ".$($cpcfgxDS)bin$($cpcfgxDS)Release$($cpcfgxDS)publish$($cpcfgxDS)"
+$PackDir = ".\bin\Release\publish\".Replace('\', $cpcfgxDS)
 
 $DotPrefix = '..............................'
 $donePrefix =       "[Done].......$DotPrefix"
@@ -10,6 +10,27 @@ $ProcessingPrefix = "[Processing].$DotPrefix"
 $successPrefix =    "[Success]....$DotPrefix"
 $failPrefix =       "[Fail].......$DotPrefix"
 $NoWork =           "[No Work]....$DotPrefix"
+
+
+function Format-Cs-Paths {
+    param (
+        [string] $PathValue,
+        [switch] $TestPath
+    )
+
+    $cp_ds = [System.IO.Path]::DirectorySeparatorChar;
+
+    $NewPathValue = $PathValue.Replace('\', $cpcfgxDS)
+
+    if($TestPath -and Test-path $NewPathValue){
+        Write-Host "[Path-Found]$DotPrefix $($NewPathValue)";
+    }
+    elseif($TestPath) {
+        Write-Host "[Path-Not-Found]$DotPrefix $($NewPathValue)";
+    }
+
+    return $NewPathValue
+}
 
 <# Extented Variables #>
 ## Below Line Not need as of yet
@@ -27,18 +48,19 @@ function Get-Cs-Project-version {
 		return;
 	}
 	elseif(!(Test-Path $CsProjDir)){
-		
 		Write-Host "The Path '$CsProjDir' does not Exist" -ForegroundColor Red
 		return;
 	}
 
-    Push-Location $CsProjDir
+    [string] $CleanCsProjDir = Format-Cs-Paths $CsProjDir
 
-    $csProj = ".$($cpcfgxDS)*.csproj"
+    Push-Location $CleanCsProjDir
+
+    $csProj = Format-Cs-Paths ".\*.csproj"
 
     $latest = Get-ChildItem $csProj | Select-Object -First 1
 
-    $csProj = ".$($cpcfgxDS)$($latest.Name)"
+    $csProj = Format-Cs-Paths ".\$($latest.Name)"
 
     if(!(Test-Path $csProj)){        
         Write-Host "$donePrefix No Project File Found." -ForegroundColor red -BackgroundColor Black
@@ -78,13 +100,15 @@ function Get-Cs-Project-PackageId {
 		return;
 	}
 
-    Push-Location $CsProjDir
+    [string] $CleanCsProjDir = Format-Cs-Paths $CsProjDir
 
-    $csProj = ".$($cpcfgxDS)*.csproj"
+    Push-Location $CleanCsProjDir
+
+    $csProj = Format-Cs-Paths ".\*.csproj"
 
     $latest = Get-ChildItem $csProj | Select-Object -First 1
 
-    $csProj = ".$($cpcfgxDS)$($latest.Name)"
+    $csProj = Format-Cs-Paths ".\$($latest.Name)"
 
     if(!(Test-Path $csProj)){        
         Write-Host "$donePrefix No Project File Found." -ForegroundColor red -BackgroundColor Black
@@ -123,15 +147,17 @@ function Update-Cs-Project-Version {
 
     )
     
-    Push-Location $CsProjDir
+    [string] $CleanCsProjDir = Format-Cs-Paths $CsProjDir
+
+    Push-Location $CleanCsProjDir
 
     Write-Host "$startingPrefix Pulling project Version" -ForegroundColor Yellow -BackgroundColor Black
 
-    $csProj = ".$($cpcfgxDS)*.csproj"
+    $csProj = Format-Cs-Paths ".\*.csproj"
 
     $latest = Get-ChildItem $csProj | Select-Object -First 1
 
-    $csProj = ".$($cpcfgxDS)$($latest.Name)"
+    $csProj = Format-Cs-Paths ".\$($latest.Name)"
 
     if(Test-Path $csProj){
         Write-Host "$ProcessingPrefix Update to Project Version."         
@@ -200,13 +226,14 @@ function Pack-Cs-Project {
 
     Write-Host "$startingPrefix Project Publishing" -ForegroundColor Yellow -BackgroundColor Black
     
-    if(Test-Path "$CsProjDir") {
+    [string] $CleanCsProjDir = Format-Cs-Paths $CsProjDir
+
+    if(Test-Path $CleanCsProjDir) {
         <#
             - The Base Path Exists  
         #>
     
-
-		Push-Location $CsProjDir		
+		Push-Location $CleanCsProjDir		
 			$prjPath = $PWD.Path
 			$updateVersion = $false
 			$version = Get-Cs-Project-version -CsProjDir $prjPath
@@ -224,7 +251,8 @@ function Pack-Cs-Project {
 			#Push-Location ".$($cpcfgxDS)bin$($cpcfgxDS)Release$($cpcfgxDS)"
 			if((Test-Path "$($PackDir)$PackageId.$version.nupkg") -and (Test-Path $nupkg_Dest)) {
 				Move-Item "$($PackDir)$PackageId.$version.nupkg" -Destination $nupkg_Dest
-				$UpdateVersion = Test-Path "$nupkg_Dest$($cpcfgxDS)$PackageId.$version.nupkg"
+                $updversionPath = Format-Cs-Paths "$nupkg_Dest\$PackageId.$version.nupkg"
+				$UpdateVersion = Test-Path $updversionPath
 			}
 			#Pop-Location
 
