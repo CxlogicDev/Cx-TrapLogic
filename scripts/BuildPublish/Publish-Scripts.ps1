@@ -10,6 +10,26 @@ function Test-Number {
     return $false
 }
 
+function Format-Paths {
+    param (
+        [string] $PathValue,
+        [switch] $TestPath
+    )
+
+    $cpcfgxDS = [System.IO.Path]::DirectorySeparatorChar
+
+    $NewPathValue = $PathValue.Replace('\', $cpcfgxDS)
+
+    if($TestPath -and (Test-path $NewPathValue)){
+        Write-Host "[Path-Found]$DotPrefix $($NewPathValue)";
+    }
+    elseif($TestPath) {
+        Write-Host "[Path-Not-Found]$DotPrefix $($NewPathValue)";
+    }
+
+    return $NewPathValue
+}
+
 function Cx-Publish-ProjConfigModule {
     <#
         This Will Publish the Under lining cs-Proj-Configure.psm1 
@@ -22,7 +42,7 @@ function Cx-Publish-ProjConfigModule {
 
     Push-Location $PSScriptRoot
 
-    Push-Location ..\
+    Push-Location "$(Format-Paths -PathValue '..\')"
 
     $myDir = 'cs-Proj-Configure'
 
@@ -33,7 +53,7 @@ function Cx-Publish-ProjConfigModule {
     $selectValue = 0;
     $runCt = 0;
 
-    $psModPaths = $env:PSModulePath.Split(';');
+    $psModPaths = $env:PSModulePath.Contains(':')? $env:PSModulePath.Split(':') : $env:PSModulePath.Split(';');
 
     while ($selectValue -eq 0 -and $runCt -lt 5) {
 
@@ -75,7 +95,10 @@ function Cx-Publish-ProjConfigModule {
                 mkdir $myDir
             }
             else{
-                Remove-Item [System.IO.Path]::Combine($toPath, "$myDir.psm1") -Force
+                $rmFile = [System.IO.Path]::Combine($toPath, "$myDir.psm1");
+                if(Test-Path $rmFile){
+                    Remove-Item $rmFile -Force
+                }
             }
 
             Write-Host "Copying Module $Myfile To: $toPath" -ForegroundColor Green -BackgroundColor Black

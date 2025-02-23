@@ -2,11 +2,13 @@
 	Info: Publish Script for all application Library Projects
 	Make sure the ConfigureScript.psm1 has been loaded into one of your PS Script module paths 
 #>
-$dirSep_api = [System.IO.Path]::DirectorySeparatorChar
+#$dirSep_api = [System.IO.Path]::DirectorySeparatorChar
 Push-Location $PSScriptRoot
 
 $cs_projs = @()
-Get-ChildItem "..$($dirSep_api)..$($dirSep_api)src$($dirSep_api)*.csproj" -Recurse | ForEach-Object { $cs_projs += [Tree_Branch]::new($_.FullName) }
+$_csPath = Format-Cs-Paths -PathValue "..\..\src\*.csproj"
+
+Get-ChildItem $_csPath -Recurse | ForEach-Object { $cs_projs += [Tree_Branch]::new($_.FullName) }
 
 $cs_projs = $cs_projs | Where-Object { $_.Proj_PackageId.Length -gt 0}
 
@@ -233,8 +235,7 @@ function Cx-OrderProjects {
 		[Tree_Branch[]] $branches
 	)
 
-	$dirSep_api = [System.IO.Path]::DirectorySeparatorChar
-
+	
 	$CxUtyExt = $branches | where { $_.Proj_PackageId -eq 'Cx-Utility-Extensions' }
 
 	if($null -eq $CxUtyExt){
@@ -284,9 +285,7 @@ function Cx-OrderProjects {
 
 
 	return $temp_odr;
-
-
-
+	
 	foreach($branch in $branches | Where-Object { $_.Proj_PackageId -ne $CxUtyExt.Proj_PackageId }){
 
 		if($branch.Proj_PackageId -eq 'Cx-Utility-Extensions'){
@@ -296,7 +295,7 @@ function Cx-OrderProjects {
 
 		#Need to build a conversion $branch.References[0].name
 		# ex: \dir\dir\refProjName.ext <> \ need to be / in linux and same in windows
-		if($branch.References.Length -eq 1 -and $branch.References[0].ProjName() -like "*$($dirSep_api)$($CxUtyExt.Proj_Name)" ){
+		if($branch.References.Length -eq 1 -and $branch.References[0].ProjName() -like (Format-Cs-Paths -PathValue "*\$($CxUtyExt.Proj_Name)") ){
 			$ct++
 			$branch.Publish_Order = $ct
 			$cs_projs_order += $branch
@@ -336,7 +335,7 @@ function Cx-OrderProjects {
 				Write-Host "[key:  $key; Branch: $($keyBranch.Proj_Name); Refs: $($keyBranch.References.Length)]" -ForegroundColor Yellow
 				
 				if($keyBranch.References.Length -eq 1 ){				
-					$refNow = ($RefProjNames | Where-Object { $keyBranch.References[0].name -like "*$($dirSep_api)$($_)" })
+					$refNow = ($RefProjNames | Where-Object { $keyBranch.References[0].name -like (Format-Cs-Paths -PathValue "*\$_") })
 					
 					if($null -ne $refNow){
 						$ct++
@@ -360,7 +359,7 @@ function Cx-OrderProjects {
 
 				foreach($keyRef in $keyBranch.reference){
 
-					$refNow = ($RefProjNames | Where-Object { $keyRef.name -like "*$($dirSep_api)$($_)" })
+					$refNow = ($RefProjNames | Where-Object { $keyRef.name -like (Format-Cs-Paths -PathValue "*\$_") })
 					$RefProjs += $keyRef
 				}
 

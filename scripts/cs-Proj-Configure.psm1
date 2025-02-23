@@ -1,7 +1,5 @@
 <#Process Cs Project Files#>
-$cpcfgxDS = [System.IO.Path]::DirectorySeparatorChar
-
-$PackDir = ".\bin\Release\publish\".Replace('\', $cpcfgxDS)
+#$cpcfgxDS = [System.IO.Path]::DirectorySeparatorChar
 
 $DotPrefix = '..............................'
 $donePrefix =       "[Done].......$DotPrefix"
@@ -18,11 +16,11 @@ function Format-Cs-Paths {
         [switch] $TestPath
     )
 
-    $cp_ds = [System.IO.Path]::DirectorySeparatorChar;
+    $cpcfgxDS = [System.IO.Path]::DirectorySeparatorChar
 
     $NewPathValue = $PathValue.Replace('\', $cpcfgxDS)
 
-    if($TestPath -and Test-path $NewPathValue){
+    if($TestPath -and (Test-path $NewPathValue)){
         Write-Host "[Path-Found]$DotPrefix $($NewPathValue)";
     }
     elseif($TestPath) {
@@ -31,6 +29,8 @@ function Format-Cs-Paths {
 
     return $NewPathValue
 }
+
+$PackDir = Format-Cs-Paths -PathValue ".\bin\Release\publish\"
 
 <# Extented Variables #>
 ## Below Line Not need as of yet

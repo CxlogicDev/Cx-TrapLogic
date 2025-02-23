@@ -2,11 +2,13 @@
 	Info: Publish Script for all application Library Projects
 	Make sure the ConfigureScript.psm1 has been loaded into one of your PS Script module paths 
 #>
-$dirSep = [System.IO.Path]::DirectorySeparatorChar
+#$_dirSep = [System.IO.Path]::DirectorySeparatorChar
 Push-Location $PSScriptRoot
 
 $cs_projs = @()
-Get-ChildItem "..$($dirSep)..$($dirSep)src$($dirSep)*.csproj" -Recurse | ForEach-Object { $cs_projs += [Tree_Branch]::new($_.FullName) }
+$_csPath = Format-Cs-Paths -PathValue "..\..\src\*.csproj"
+
+Get-ChildItem $_csPath -Recurse | ForEach-Object { $cs_projs += [Tree_Branch]::new($_.FullName) }
 
 $cs_projs = $cs_projs | Where-Object { $_.Proj_PackageId.Length -gt 0}
 
@@ -24,6 +26,13 @@ class Tree_Branch_Referenece {
 		$this.name = $Name
 		$this.referenceType = $ReferenceType
 		#$this.version = $Version
+	}
+	
+	[string] ProjName() 
+	{#'ProjectReference'
+		
+		return $this.name.Replace('\',  [System.IO.Path]::DirectorySeparatorChar);
+		#$this.References += [Tree_Branch_Referenece]::new($Name, 'ProjectReference')
 	}
 }
 
@@ -226,29 +235,56 @@ function Cx-OrderProjects {
 		[Tree_Branch[]] $branches
 	)
 
+
 	$CxUtyExt = $branches | where { $_.Proj_PackageId -eq 'Cx-Utility-Extensions' }
 
 	if($null -eq $CxUtyExt){
 		throw new [System.InvalidOperationException] "Missing Cx-Utility-Extensions Project"
 	}
 
-	[int]$ct = 1;
-	$CxUtyExt.Publish_Order = $ct
+	
+	$CxUtyExt.Publish_Order = 1
 	
 	#The C# project branches to hold
 	$cs_projs_order = @()
 
-	$cs_projs_order += $CxUtyExt #.Add($ct, $CxUtyExt)	
+	$cs_projs_order += $CxUtyExt #.Add($ct, $CxUtyExt)
+	
+	$cs_OrderedNames = @()
 
+	$cs_OrderedNames += $CxUtyExt.Proj_Name#"*$($dirSep_api)$($CxUtyExt.Proj_Name)"
+	
 	#Temp Hash Table to hold an array of projects with number of References used
 	$temp_odr = @{}
-
+	
 	#The fist for the base project [0] = "Cx-Utility-Extensions".
 	$temp_odr.Add(0, @())
-
+	
 	$temp_odr[0] += $CxUtyExt
-
+	
 	$temp_odr.Add(1, @())
+
+	[int]$ct = 1;
+	
+	$nBranches = $branches | Where-Object { $_.Proj_PackageId -ne $CxUtyExt.Proj_PackageId -and $_.References.Length -eq 1 -and $_.References[0].ProjName() -like "*$($dirSep_api)$($CxUtyExt.Proj_Name)"}
+	
+	foreach ($sbranch in $nBranches) {
+		$ct++
+		$sbranch.Publish_Order = $ct
+		$cs_projs_order += $sbranch
+		$temp_odr[1] += $sbranch
+		$cs_OrderedNames += $sbranch.Proj_Name#"*$($dirSep_api)$($sbranch.Proj_Name)"
+		Write-Host "[Ordered <> $($sbranch.Proj_Name)] Has Order at $ct" -ForegroundColor Green
+	}
+
+	return $cs_OrderedNames
+	#$_.References[0].ProjName() -like "*$($dirSep_api)$($CxUtyExt.Proj_Name)"
+
+	$nBranches = $branches | Where-Object { $_.Proj_PackageId -ne $CxUtyExt.Proj_PackageId -and $_.References.Length -eq 1 -and $_.References[0].ProjName() -like "*$($dirSep_api)$($CxUtyExt.Proj_Name)"}
+	
+
+
+	return $temp_odr;
 
 	foreach($branch in $branches | Where-Object { $_.Proj_PackageId -ne $CxUtyExt.Proj_PackageId }){
 
@@ -257,7 +293,7 @@ function Cx-OrderProjects {
 			continue;
 		}
 
-		if($branch.References.Length -eq 1 -and $branch.References[0].name -like "*$($dirSep)$($CxUtyExt.Proj_Name)" ){
+		if($branch.References.Length -eq 1 -and $branch.References[0].name -like (Format-Cs-Paths -PathValue "*\$($CxUtyExt.Proj_Name)") ){
 			$ct++
 			$branch.Publish_Order = $ct
 			$cs_projs_order += $branch
@@ -297,7 +333,7 @@ function Cx-OrderProjects {
 				Write-Host "[key:  $key; Branch: $($keyBranch.Proj_Name); Refs: $($keyBranch.References.Length)]" -ForegroundColor Yellow
 				
 				if($keyBranch.References.Length -eq 1 ){				
-					$refNow = ($RefProjNames | Where-Object { $keyBranch.References[0].name -like "*$($dirSep)$($_)" })
+					$refNow = ($RefProjNames | Where-Object { $keyBranch.References[0].name -like (Format-Cs-Paths -PathValue "*\$_") })
 					
 					if($null -ne $refNow){
 						$ct++
@@ -321,7 +357,7 @@ function Cx-OrderProjects {
 
 				foreach($keyRef in $keyBranch.reference){
 
-					$refNow = ($RefProjNames | Where-Object { $keyRef.name -like "*$($dirSep)$($_)" })
+					$refNow = ($RefProjNames | Where-Object { $keyRef.name -like (Format-Cs-Paths -PathValue "*\$_") })
 					$RefProjs += $keyRef
 				}
 
