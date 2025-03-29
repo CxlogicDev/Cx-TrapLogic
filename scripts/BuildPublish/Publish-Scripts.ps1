@@ -21,10 +21,12 @@ function Format-Paths {
     $NewPathValue = $PathValue.Replace('\', $cpcfgxDS)
 
     if($TestPath -and (Test-path $NewPathValue)){
-        Write-Host "[Path-Found]$DotPrefix $($NewPathValue)";
+        Write-Host "[Path-Found]$DotPrefix" -ForegroundColor Green
+        Write-Host " $($NewPathValue)" -ForegroundColor Yellow
     }
     elseif($TestPath) {
-        Write-Host "[Path-Not-Found]$DotPrefix $($NewPathValue)";
+        Write-Host "[Path-Not-Found]$DotPrefix" -ForegroundColor Red
+        Write-Host " $($NewPathValue)" -ForegroundColor White
     }
 
     return $NewPathValue
