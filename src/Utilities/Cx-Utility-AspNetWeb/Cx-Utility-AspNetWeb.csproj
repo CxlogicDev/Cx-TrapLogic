@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <RootNamespace>CxUtility.AspNetWeb</RootNamespace>
-    <Version>1.0.0.11</Version>
+    <Version>1.0.0.12</Version>
     <PackageId>Cx-Utility-AspNetWeb</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>

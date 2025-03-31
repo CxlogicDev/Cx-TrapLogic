@@ -274,7 +274,8 @@ function Cx-OrderProjects {
 		$cs_projs_order += $sbranch
 		$temp_odr[1] += $sbranch
 		$cs_OrderedNames += $sbranch.Proj_Name#"*$($dirSep_api)$($sbranch.Proj_Name)"
-		Write-Host "[Ordered <> $($sbranch.Proj_Name)] Has Order at $ct" -ForegroundColor Green
+		Write-Host "[Ordered <> $($sbranch.Proj_Name)] " -ForegroundColor Green -NoNewline 
+		Write-Host "Has Order at $ct" -ForegroundColor White
 	}
 
 	return $cs_OrderedNames
@@ -298,7 +299,8 @@ function Cx-OrderProjects {
 			$branch.Publish_Order = $ct
 			$cs_projs_order += $branch
 			$temp_odr[1] += $branch
-			Write-Host "[Ordered <> $($branch.Proj_Name)] Has Order at $ct" -ForegroundColor Green
+			Write-Host "[Ordered <> $($branch.Proj_Name)]" -ForegroundColor Green -NoNewline
+			Write-Host " Has Order at $ct" -ForegroundColor White
 			continue;
 		}
 		elseif(!$temp_odr.ContainsKey(($branch.References.Length + 1))) {
@@ -315,12 +317,15 @@ function Cx-OrderProjects {
 
 	while ($maxKey -gt $curMaxKey) {
 		$curMaxKey = $maxKey
-		Write-Host "Looping Max Key: $maxKey" -ForegroundColor Yellow
+		Write-Host "Looping Max Key: " -ForegroundColor Yellow -NoNewline
+		Write-Host " $maxKey" -ForegroundColor White
 
 		foreach($key in $temp_odr.Keys | Sort-Object) {
 
 			if($key -lt $curMaxKey){
-				Write-Host "[Skipped key:  $key]" -ForegroundColor Yellow
+				Write-Host "[Skipped key:" -ForegroundColor Yellow -NoNewline
+				Write-Host "  $key" -ForegroundColor White -NoNewline
+				Write-Host "]" -ForegroundColor Yellow
 				continue;
 			}
 
@@ -330,7 +335,22 @@ function Cx-OrderProjects {
 			$cs_projs_order | ForEach-Object { $RefProjNames += $_.Proj_Name }
 			
 			foreach($keyBranch in $temp_odr[$key]){
-				Write-Host "[key:  $key; Branch: $($keyBranch.Proj_Name); Refs: $($keyBranch.References.Length)]" -ForegroundColor Yellow
+				Write-Host "[key:  " -ForegroundColor Yellow -NoNewline
+				Write-Host "$key" -ForegroundColor White  -NoNewline
+				Write-Host "; " -ForegroundColor Yellow  -NoNewline
+
+				Write-Host "Branch: " -ForegroundColor Yellow  -NoNewline
+				Write-Host "$($keyBranch.Proj_Name)" -ForegroundColor White  -NoNewline
+				Write-Host "; " -ForegroundColor Yellow  -NoNewline
+
+				#Template
+				#Write-Host " Refs: $($keyBranch.References.Length)]" -ForegroundColor Yellow  -NoNewline
+				#Write-Host " $($keyBranch.References.Length)]" -ForegroundColor Yellow  -NoNewline
+				#Write-Host "; " -ForegroundColor Yellow  -NoNewline
+
+				Write-Host "Refs: $($keyBranch.References.Length)]" -ForegroundColor Yellow  -NoNewline
+				Write-Host "$($keyBranch.References.Length)]" -ForegroundColor White  -NoNewline
+				Write-Host "]" -ForegroundColor Yellow
 				
 				if($keyBranch.References.Length -eq 1 ){				
 					$refNow = ($RefProjNames | Where-Object { $keyBranch.References[0].name -like (Format-Cs-Paths -PathValue "*\$_") })
@@ -339,7 +359,8 @@ function Cx-OrderProjects {
 						$ct++
 						$keyBranch.Publish_Order = $ct
 						$cs_projs_order += $keyBranch
-						Write-Host "[Ordered <> $($branch.Proj_Name)] Has Order at $ct" -ForegroundColor Green
+						Write-Host "[Ordered <> $($branch.Proj_Name)] " -ForegroundColor Green -NoNewline
+						Write-Host "Has Order at $ct" -ForegroundColor White
 						continue;
 					}
 					elseif(!$temp_odr.ContainsKey($nextKey)) {
@@ -349,7 +370,8 @@ function Cx-OrderProjects {
 
 					$maxKey = $nextKey
 					$temp_odr[$nextKey] += $keyBranch
-					Write-Host "[Reordered <> $($branch.Proj_Name)] was reorder to Key: $nextKey" -ForegroundColor Yellow
+					Write-Host "[Reordered <> $($branch.Proj_Name)] " -ForegroundColor Yellow -NoNewline
+					Write-Host "was reorder to Key: $nextKey" -ForegroundColor White
 					continue;
 				}
 
@@ -365,7 +387,8 @@ function Cx-OrderProjects {
 					$ct++
 					$keyBranch.Publish_Order = $ct
 					$cs_projs_order += $keyBranch
-					Write-Host "[Ordered <> $($branch.Proj_Name)] Has Order at $ct" -ForegroundColor Green
+					Write-Host "[Ordered <> $($branch.Proj_Name)] Has Order at $ct" -ForegroundColor Green -NoNewline
+					Write-Host " Has Order at $ct" -ForegroundColor White
 				}
 				elseif($RefProjs.Length -lt $keyBranch.reference){
 					if(!$temp_odr.ContainsKey($nextKey)) {
@@ -375,10 +398,12 @@ function Cx-OrderProjects {
 
 					$maxKey = $nextKey
 					$temp_odr[$nextKey] += $keyBranch
-					Write-Host "[Reordered <> $($branch.Proj_Name)] was reorder to Key: $nextKey" -ForegroundColor Yellow
+					Write-Host "[Reordered <> $($branch.Proj_Name)] was reorder to Key: $nextKey" -ForegroundColor Green
+					Write-Host " was reorder to Key: $nextKey" -ForegroundColor White
 				}
 				else {
-					Write-Host "[Error <> $($keyBranch.Proj_Name)] Problem with Reference Values " -ForegroundColor Red
+					Write-Host "[Error <> $($keyBranch.Proj_Name)]" -ForegroundColor Red -NoNewline
+					Write-Host " Problem with Reference Values " -ForegroundColor White
 				}
 			}
 
@@ -386,10 +411,12 @@ function Cx-OrderProjects {
 		}
 
 		if($maxKey -gt $curMaxKey){
-			Write-Host "New Max Key: $maxKey" -ForegroundColor Yellow
+			Write-Host "New Max Key: " -ForegroundColor Yellow -NoNewline
+			Write-Host " $maxKey" -ForegroundColor White
 		}
 		else{
-			Write-Host "Finished Looping Max Key: $maxKey" -ForegroundColor Yellow
+			Write-Host "Finished Looping Max Key: " -ForegroundColor Yellow -NoNewline
+			Write-Host " $maxKey" -ForegroundColor White
 		}
 
 	}

@@ -1,21 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-   <!-- <TargetFramework>net6.0</TargetFramework> -->
+    <!-- <TargetFramework>net6.0</TargetFramework> -->
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <LangVersion>12.0</LangVersion>
     <RootNamespace>CxUtility</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.18</Version>
+    <Version>1.0.0.19</Version>
     <PackageId>Cx-Utility-Extensions</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
   </PropertyGroup>
-
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'"> 
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="System.Collections.Immutable" Version="9.0.3" />
     <PackageReference Include="System.Text.Json" Version="9.0.3" />
   </ItemGroup>
-
 </Project>
