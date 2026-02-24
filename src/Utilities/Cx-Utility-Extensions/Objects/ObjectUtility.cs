@@ -26,7 +26,6 @@ public static class ObjectUtility
     /// <param name="Md1">The Orignal model</param>
     /// <param name="ignorCase">Tell the function to match ignoring case</param>
     /// <param name="SetProperties">Will Allow setting or overridng of a property {PropName: Key; PropValue: Value}</param>
-    /// <returns></returns>
     public static M2 ModelTransfer<M2>(this object Md1, IDictionary<string, object>? SetProperties, bool ignorCase = false, bool copyCanWrite_Only = true, params string[] excludeProps) where M2 : class, new()
     {
         //Creates the new model

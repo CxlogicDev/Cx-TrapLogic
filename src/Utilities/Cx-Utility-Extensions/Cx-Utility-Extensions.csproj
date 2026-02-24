@@ -2,7 +2,7 @@
   <PropertyGroup>
    <!-- <TargetFramework>net6.0</TargetFramework> -->
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
-    <LangVersion>12.0</LangVersion>
+    <LangVersion>14.0</LangVersion>
     <RootNamespace>CxUtility</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -13,9 +13,9 @@
   </PropertyGroup>
 
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'"> 
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.3" />
-    <PackageReference Include="System.Text.Json" Version="9.0.3" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">     
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
 </Project>

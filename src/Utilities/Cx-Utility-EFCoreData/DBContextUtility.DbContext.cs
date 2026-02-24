@@ -13,6 +13,12 @@ namespace CxUtility.EFCoreData;
 
 public static partial class DBContextUtility
 {
+
+
+#if NET6_0
+    // This method will only be compiled if the target framework is exactly .NET 6.0
+    
+
     /// <summary>
     /// Builds a DbCommand that will run a script or store Procedure
     /// </summary>
@@ -29,6 +35,8 @@ public static partial class DBContextUtility
         cmd.CommandType = commandType;
         return cmd;
     }
+
+#endif
 
     /// <summary>
     /// Builds a DbCommand that will run a script
@@ -100,6 +108,8 @@ public static partial class DBContextUtility
         DateTimeOffset => DbType.DateTime2,
         DateTime => DbType.DateTime,
         bool => DbType.Boolean,
+        double => DbType.Double,
+        decimal => DbType.Decimal,
         _ => DbType.String,
     };
 

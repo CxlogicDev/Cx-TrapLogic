@@ -14,10 +14,7 @@ namespace CxUtility.EFCoreData
         //public DBContextException() { }
         public DBContextContinueException(string message) : base(message) { }
         public DBContextContinueException(string message, Exception inner) : base(message, inner) { }
-        protected DBContextContinueException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
-
+        
     }
 
 
@@ -28,9 +25,7 @@ namespace CxUtility.EFCoreData
         public DBContextStopException() { }
         public DBContextStopException(string message) : base(message) { }
         public DBContextStopException(string message, Exception inner) : base(message, inner) { }
-        protected DBContextStopException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+        
     }
 
     [Serializable]
@@ -41,9 +36,6 @@ namespace CxUtility.EFCoreData
 
         public DBContextMultipleEntityException(string message, Exception inner) : base(message, inner) { }
 
-        protected DBContextMultipleEntityException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
 

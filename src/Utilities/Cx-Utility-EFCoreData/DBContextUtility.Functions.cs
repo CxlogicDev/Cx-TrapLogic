@@ -18,7 +18,7 @@ public static partial class DBContextUtility
         {
             id = context
                     .BuildScriptCommand($"select OBJECT_ID('{FullObjectName}') as id")
-                    .Exec_StoredProc<string>()
+                    .Exec_Command<string>()
                     .FirstOrDefault();
         }
         catch (Exception)
