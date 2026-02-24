@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-   <!-- <TargetFramework>net6.0</TargetFramework> -->
+    <!-- <TargetFramework>net6.0</TargetFramework> -->
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <LangVersion>14.0</LangVersion>
     <RootNamespace>CxUtility</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0.18</Version>
+    <Version>1.0.0.19</Version>
     <PackageId>Cx-Utility-Extensions</PackageId>
     <Authors>Christifer</Authors>
     <Company>CxLogicDev</Company>
@@ -17,5 +17,4 @@
     <PackageReference Include="System.Collections.Immutable" />
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
-
 </Project>
